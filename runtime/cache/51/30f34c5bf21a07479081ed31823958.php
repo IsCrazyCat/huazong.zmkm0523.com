@@ -1,3 +1,0 @@
-<?php
-//000000000000a:2:{i:0;a:10:{s:2:"id";i:13;s:4:"name";s:17:"B  --   百年堂";s:4:"logo";s:68:"/public/upload/brand/2018/12-05/4c8cc5f19ac18f516dc5df056a6d915b.png";s:4:"desc";s:30:"山东东阿正宗阿胶品牌";s:3:"url";s:0:"";s:4:"sort";i:0;s:8:"cat_name";s:0:"";s:13:"parent_cat_id";i:1;s:6:"cat_id";i:0;s:6:"is_hot";i:1;}i:1;a:10:{s:2:"id";i:8;s:4:"name";s:20:"X  --   休闲食品";s:4:"logo";s:68:"/public/upload/brand/2018/10-31/ed1405e28bd592f4b54ab2efedbd01ca.jpg";s:4:"desc";s:12:"化妆品牌";s:3:"url";s:0:"";s:4:"sort";i:0;s:8:"cat_name";s:0:"";s:13:"parent_cat_id";i:1;s:6:"cat_id";i:0;s:6:"is_hot";i:1;}}
-?>

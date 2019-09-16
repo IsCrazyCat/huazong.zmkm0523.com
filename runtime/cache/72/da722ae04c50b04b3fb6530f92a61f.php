@@ -1,3 +1,0 @@
-<?php
-//000000000000a:5:{i:0;a:4:{s:2:"id";i:15;s:4:"name";s:11:"A 阿胶块";s:9:"parent_id";i:14;s:5:"level";i:2;}i:1;a:4:{s:2:"id";i:16;s:4:"name";s:11:"A 阿胶粉";s:9:"parent_id";i:14;s:5:"level";i:2;}i:2;a:4:{s:2:"id";i:17;s:4:"name";s:11:"A 阿胶糕";s:9:"parent_id";i:14;s:5:"level";i:2;}i:3;a:4:{s:2:"id";i:14;s:4:"name";s:14:"A 阿胶补品";s:9:"parent_id";i:0;s:5:"level";i:1;}i:4;a:4:{s:2:"id";i:1;s:4:"name";s:14:"X 休闲食品";s:9:"parent_id";i:0;s:5:"level";i:1;}}
-?>

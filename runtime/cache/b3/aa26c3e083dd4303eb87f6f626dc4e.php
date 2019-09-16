@@ -1,3 +1,0 @@
-<?php
-//000000000000a:18:{s:8:"site_url";s:30:"http://dinghuo.boshang3710.com";s:9:"record_no";s:0:"";s:10:"store_name";s:24:"爱丽安轻创业平台";s:10:"store_logo";s:26:"/public/images/newLogo.png";s:11:"store_title";s:24:"爱丽安轻创业平台";s:10:"store_desc";s:24:"爱丽安轻创业平台";s:13:"store_keyword";s:24:"爱丽安轻创业平台";s:7:"contact";s:6:"张良";s:5:"phone";s:11:"13306350011";s:7:"address";s:12:"创业大厦";s:2:"qq";s:9:"510868112";s:3:"qq2";s:0:"";s:3:"qq3";s:0:"";s:6:"mobile";s:11:"13506350011";s:8:"province";s:5:"19280";s:4:"city";s:5:"20981";s:8:"district";s:5:"47498";s:11:"form_submit";s:2:"ok";}
-?>
