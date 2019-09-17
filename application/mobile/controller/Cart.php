@@ -233,31 +233,31 @@ class Cart extends MobileBase {
         if($order['pay_status'] == 1){
 			
 			$update_data['status'] =1;
-			$update = Db::name('rebate_log')->where('order_id',$order_id)->update($update_data);
-		
-		
-			if(file_exists(APP_PATH.'common/logic/DistributLogic.php'))
-			{
-				$distributLogic = new \app\common\logic\DistributLogic();
-				$distributLogic->rebate_log($order); // 生成分成记录
-				//$distributLogic->auto_confirm(); // 自动确认分成
-			}
-			update_user_level($this->user_id);
-			$myuser = M('users')->where("user_id", $this->user_id)->find();//李洪顺
-			$first_leader = $myuser['first_leader'];
-			if ( (int)$first_leader > 0 ) {
-				update_user_level($first_leader);
-			}
-			$second_leader = $myuser['second_leader'];
-			if ( (int)$second_leader > 0 ) {
-				update_user_level($second_leader);
-			}
-			$third_leader = $myuser['third_leader'];
-			if ( (int)$third_leader > 0 ) {
-				update_user_level($third_leader);
-			}
-		
-			
+//			$update = Db::name('rebate_log')->where('order_id',$order_id)->update($update_data);
+//
+//
+//			if(file_exists(APP_PATH.'common/logic/DistributLogic.php'))
+//			{
+//				$distributLogic = new \app\common\logic\DistributLogic();
+//				$distributLogic->rebate_log($order); // 生成分成记录
+//				//$distributLogic->auto_confirm(); // 自动确认分成
+//			}
+//			update_user_level($this->user_id);
+//			$myuser = M('users')->where("user_id", $this->user_id)->find();//李洪顺
+//			$first_leader = $myuser['first_leader'];
+//			if ( (int)$first_leader > 0 ) {
+//				update_user_level($first_leader);
+//			}
+//			$second_leader = $myuser['second_leader'];
+//			if ( (int)$second_leader > 0 ) {
+//				update_user_level($second_leader);
+//			}
+//			$third_leader = $myuser['third_leader'];
+//			if ( (int)$third_leader > 0 ) {
+//				update_user_level($third_leader);
+//			}
+
+
             $order_detail_url = U("Mobile/User/order_detail",array('id'=>$order_id));
             header("Location: $order_detail_url");
             exit;

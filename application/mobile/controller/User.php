@@ -367,31 +367,31 @@ class User extends MobileBase
         }
 		
 		
-		if($order_info['pay_status'] == 1){
-			
-			if(file_exists(APP_PATH.'common/logic/DistributLogic.php'))
-			{
-				$distributLogic = new \app\common\logic\DistributLogic();
-				$distributLogic->rebate_log($order_info); // 生成分成记录
-				$distributLogic->auto_confirm(); // 自动确认分成
-			}
-			update_user_level($this->user_id);
-			$myuser = M('users')->where("user_id", $this->user_id)->find();//李洪顺
-			$first_leader = $myuser['first_leader'];
-			if ( (int)$first_leader > 0 ) {
-				update_user_level($first_leader);
-			}
-			$second_leader = $myuser['second_leader'];
-			if ( (int)$second_leader > 0 ) {
-				update_user_level($second_leader);
-			}
-			$third_leader = $myuser['third_leader'];
-			if ( (int)$third_leader > 0 ) {
-				update_user_level($third_leader);
-			}
-		
-            
-        }
+//		if($order_info['pay_status'] == 1){
+//
+//			if(file_exists(APP_PATH.'common/logic/DistributLogic.php'))
+//			{
+//				$distributLogic = new \app\common\logic\DistributLogic();
+//				$distributLogic->rebate_log($order_info); // 生成分成记录
+//				$distributLogic->auto_confirm(); // 自动确认分成
+//			}
+//			update_user_level($this->user_id);
+//			$myuser = M('users')->where("user_id", $this->user_id)->find();//李洪顺
+//			$first_leader = $myuser['first_leader'];
+//			if ( (int)$first_leader > 0 ) {
+//				update_user_level($first_leader);
+//			}
+//			$second_leader = $myuser['second_leader'];
+//			if ( (int)$second_leader > 0 ) {
+//				update_user_level($second_leader);
+//			}
+//			$third_leader = $myuser['third_leader'];
+//			if ( (int)$third_leader > 0 ) {
+//				update_user_level($third_leader);
+//			}
+//
+//
+//        }
 		
 		
         //获取订单商品
@@ -1044,25 +1044,25 @@ class User extends MobileBase
             $this->assign('order_goods', $order_goods);
 			
 			// 多少天后自动分销记录自动分成 
-			if(file_exists(APP_PATH.'common/logic/DistributLogic.php')){
-				$distributLogic = new \app\common\logic\DistributLogic();
-				$distributLogic->auto_confirm(); // 自动确认分成
-			}  
-			
-		update_user_level($this->user_id);
-		$myuser = M('users')->where("user_id", $this->user_id)->find();//李洪顺
-		$first_leader = $myuser['first_leader'];
-		if ( (int)$first_leader > 0 ) {
-			update_user_level($first_leader);
-		}
-		$second_leader = $myuser['second_leader'];
-		if ( (int)$second_leader > 0 ) {
-			update_user_level($second_leader);
-		}
-		$third_leader = $myuser['third_leader'];
-		if ( (int)$third_leader > 0 ) {
-			update_user_level($third_leader);
-		}
+//			if(file_exists(APP_PATH.'common/logic/DistributLogic.php')){
+//				$distributLogic = new \app\common\logic\DistributLogic();
+//				$distributLogic->auto_confirm(); // 自动确认分成
+//			}
+//
+//		update_user_level($this->user_id);
+//		$myuser = M('users')->where("user_id", $this->user_id)->find();//李洪顺
+//		$first_leader = $myuser['first_leader'];
+//		if ( (int)$first_leader > 0 ) {
+//			update_user_level($first_leader);
+//		}
+//		$second_leader = $myuser['second_leader'];
+//		if ( (int)$second_leader > 0 ) {
+//			update_user_level($second_leader);
+//		}
+//		$third_leader = $myuser['third_leader'];
+//		if ( (int)$third_leader > 0 ) {
+//			update_user_level($third_leader);
+//		}
 	    
 			
 			

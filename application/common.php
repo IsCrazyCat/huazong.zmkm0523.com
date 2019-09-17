@@ -69,20 +69,31 @@ function update_user_level($user_id){
         $first_level = $first_user['level'];
         if($first_level == '1' || $first_level == '2'){//推荐人为注册会员或入单会员
             //查询推荐人的直推入单会员数  直接推荐人为first_leader
-            $first_count = Db::name("users")->where('first_leader =:first_leader and level in (2,3,4)')->bind("first_leader",$first_leader)->count();
+            $first_count = Db::name("users")
+                ->where('first_leader =:first_leader and level in (2,3,4)')
+                ->bind("first_leader",$first_leader)
+                ->count();
             if($first_count>=10){//升级为市代
                 //更新推荐人等级为市代，更新当前用户的second_leader即市代为推荐人ID（first_leader）
                 Db::name("users")->where('user_id',$first_leader)->update(['level'=>'3']);
-                Db::name('users')->where('user_id',$user_id)->update(['second_leader'=>$first_leader]);
+                update_underling_leader($first_leader);
+
+
 
                 //推荐人的推荐人
                 $tt_user = Db::name("users")->where('user_id', $first_user['first_leader'])->find();
                 $tt_user_level = $tt_user['level'];
                 if($tt_user_level=='3'){//推荐人的推荐人为市代
-                    $tt_count = Db::name("users")->where(['first_leader'=>$tt_user['user_id'],['level','in',['3','4']]])->count();
+                    $param = [
+                        'first_leader'=>$tt_user['user_id'],
+                        'level'=>array('in','3,4')
+                    ];
+                    $tt_count = Db::name("users")
+                        ->where($param)
+                        ->count();
                     if($tt_count>=10){
                         Db::name("users")->where('user_id',$tt_user['user_id'])->update(['level'=>'4']);
-                        Db::name('users')->where('user_id',$user_id)->update(['third_leader'=>$first_leader]);
+                        Db::name('users')->where('user_id',$user_id)->update(['third_leader'=>$tt_user['user_id']]);
                     }
                 }
             }
@@ -156,7 +167,7 @@ function distribution_money_by_level($user_id){
                 }else  if($first_user['level']==3){
                     //直接推荐人为市代 获得400 + 2%报单奖 + 见点2元
                     $sd_money = 400 + 680 * 2 / 100;
-                    Db::name('users')->where('user_id',first_leader)->update(['user_money' => ['exp','user_money+'.$sd_money]]);
+                    Db::name('users')->where('user_id',$first_leader)->update(['user_money' => ['exp','user_money+'.$sd_money]]);
 
                     //平级市代
                     $second_user =  Db::name('users')->where("user_id", $second_leader)->find();
@@ -166,7 +177,7 @@ function distribution_money_by_level($user_id){
                     }
                     if($third_leader>0){
                         $sd_money = 50 ;
-                        Db::name('users')->where('user_id',$second_user['third_leader'])->update(['user_money' => ['exp','user_money+'.$sd_money]]);
+                        Db::name('users')->where('user_id',$third_leader)->update(['user_money' => ['exp','user_money+'.$sd_money]]);
                     }
                 }else  if($first_user['level']==4){
                     //直接推荐人为省代 获取500+ 报单奖2% + 见点3元
@@ -259,6 +270,38 @@ function users_leader_all($user_id){
     return $result;
 }
 
+/**
+ * 当用户等级变动为市代或省代，更新所有伞下leader信息
+ * @param $user_id 升级会员user_id
+ * @param $level 升级后的级别 3市代 4省代
+ * @return bool 是否更新完毕 ture更新完毕 false更新失败
+ */
+function update_underling_leader($user_id){
+    $cur_users = Db::name("users")->where('user_id', $user_id)->find();
+    $cur_level = $cur_users['level'];
+    if($cur_level == 3){//升级为市代
+        //直接推荐人为当前会员的 first_leader = seconde_leader = 当前会员User_id
+        Db::name('users')->where('first_leader',$user_id)->update(['second_leader'=>$user_id]);
+
+        $cur_users_unders = Db::name('users')->where('first_leader',$user_id)->select();
+        foreach ($cur_users_unders as $key => $val){
+            if($val['level']==4){
+                //等级为省代 不知道怎么处理
+            }else if($val['level']==3){
+                //等级为市代 结束递归
+            }else{
+                Db::name("users")
+                    ->where('user_id',$val['user_id'])
+                    ->update(['second_leader'=>$user_id]);
+            }
+        }
+    }
+
+    return false;
+}
+function level_up_sd(){
+
+}
 
 /**
  *  商品缩略图 给于标签调用 拿出商品表的 original_img 原始图来裁切出来的
@@ -1116,10 +1159,16 @@ function update_pay_status($order_sn,$ext=array())
  *
  */
 function check_rudan_first($user_id){
+    $paramMap = [
+        'o.`user_id`'=>$user_id,
+        'o.order_status'=>array('in','1,2,3'),
+        'og.`goods_name`'=>array('like','%入单%')
+    ];
     $orderList = Db::name('order')
         ->alias('o')
         ->join('OrderGoods og','o.`order_id` = og.`order_id`')
-        ->where('o.`user_id` = $user_id AND  (o.order_status= 1 OR o.order_status= 2 OR o.order_status = 4)  AND og.`goods_name` LIKE \'%入单%\'')->find();
+        ->where($paramMap)
+        ->find();
     if(empty($orderList)){
         //首次购买
         return ture;
@@ -1428,16 +1477,16 @@ function calculate_price($user_id = 0, $order_goods, $shipping_code = '', $shipp
         $anum += $val['goods_num']; // 购买数量
     }
     // 优惠券处理操作
-    $coupon_price = 0;
-    if ($coupon_id && $user_id) {
-        $coupon_price = $couponLogic->getCouponMoney($user_id, $coupon_id); // 下拉框方式选择优惠券
-    }
-    if ($couponCode && $user_id) {
-        $coupon_result = $couponLogic->getCouponMoneyByCode($couponCode, $goods_price); // 根据 优惠券 号码获取的优惠券
-        if ($coupon_result['status'] < 0)
-            return $coupon_result;
-        $coupon_price = $coupon_result['result'];
-    }
+//    $coupon_price = 0;
+//    if ($coupon_id && $user_id) {
+//        $coupon_price = $couponLogic->getCouponMoney($user_id, $coupon_id); // 下拉框方式选择优惠券
+//    }
+//    if ($couponCode && $user_id) {
+//        $coupon_result = $couponLogic->getCouponMoneyByCode($couponCode, $goods_price); // 根据 优惠券 号码获取的优惠券
+//        if ($coupon_result['status'] < 0)
+//            return $coupon_result;
+//        $coupon_price = $coupon_result['result'];
+//    }
     // 处理物流
     if ($shipping_price == 0) {
         $freight_free = tpCache('shopping.freight_free'); // 全场满多少免运费
@@ -1453,9 +1502,9 @@ function calculate_price($user_id = 0, $order_goods, $shipping_code = '', $shipp
     }
 
     if ($pay_points && ($pay_points > $user['pay_points']))
-        return array('status' => -5, 'msg' => "你的账户可用积分为:" . $user['pay_points'], 'result' => ''); // 返回结果状态
+        return array('status' => -5, 'msg' => "积分余额，可用积分为:" . $user['pay_points'], 'result' => ''); // 返回结果状态
     if ($user_money && ($user_money > $user['user_money']))
-        return array('status' => -6, 'msg' => "你的账户可用余额为:" . $user['user_money'], 'result' => ''); // 返回结果状态
+        return array('status' => -6, 'msg' => "余额不足，可用余额为:" . $user['user_money'], 'result' => ''); // 返回结果状态
 
     $order_amount = $goods_price + $shipping_price - $coupon_price; // 应付金额 = 商品价格 + 物流费 - 优惠券
 
