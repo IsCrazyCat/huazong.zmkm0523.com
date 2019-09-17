@@ -232,18 +232,18 @@ class UsersLogic extends Model
 			$map['first_leader'] = 0;
 		}
 
-        // 成为分销商条件  
-        $distribut_condition = tpCache('distribut.condition'); 
-        if($distribut_condition == 0)  // 直接成为分销商, 每个人都可以做分销        
-            $map['is_distribut']  = 1;        
-        
+        // 成为分销商条件
+        $distribut_condition = tpCache('distribut.condition');
+        if($distribut_condition == 0)  // 直接成为分销商, 每个人都可以做分销
+            $map['is_distribut']  = 1;
+
         $map['push_id'] = $push_id; //推送id
         //$map['token'] = md5(time().mt_rand(1,99999));
-        
+
         $user_id = M('users')->insertGetId($map);
         if($user_id === false)
             return array('status'=>-1,'msg'=>'注册失败');
-        
+
         $pay_points = tpCache('basic.reg_integral'); // 会员注册赠送积分
         if($pay_points > 0){
             accountLog($user_id, 0,$pay_points, '会员注册赠送积分'); // 记录日志流水
@@ -302,75 +302,63 @@ class UsersLogic extends Model
 			$tjr_users = M('users')->where("mobile", $invite)->find();
 			if($tjr_users){
 				$tjr_user_id = (int)$tjr_users['user_id'];//
-				if ( (int)$tjr_user_id == 0 ) {
-					return array('status'=>-1,'msg'=>'没有找到推荐人手机号');	
-				}
-				//如果 查询的推荐人id 大于 0 放到变量中
-				if ( $tjr_users['is_distribut'] == 0 ) {
-					return array('status'=>-1,'msg'=>'推荐人未开启分销功能');	
-				}
+
 				if ( $tjr_users['is_lock'] == 1 ) {
 					return array('status'=>-1,'msg'=>'推荐人账号被锁定冻结');	
 				}
 				if ( (int)$tjr_user_id > 0 ) {
 					$map['first_leader'] = $tjr_user_id; // 推荐人id
 				} 
-    		}
+    		}else{
+                return array('status'=>-1,'msg'=>'没有找到推荐人手机号');
+            }
 		}
 		
-//		 else {
-//			$map['first_leader'] = 1; // 官网推荐人id	 
-//		}
-		
-        // 如果找到他老爸还要找他爷爷他祖父等
+
+        // 用户注册获取用户上级市代和省代
         if($map['first_leader']){
-            $first_leader = $map['first_leader'];
-            $second_leader = 0;
-            $third_leader = 0;
-            //存在推荐人，推荐人ID为first_leader
-			$tjj_users = M('users')->where("user_id", $map['first_leader'])->find();
-			if($tjj_users){
+            $first_leader = $map['first_leader']; //直接推荐人
+            $second_leader = 0; //最近市代
+            $third_leader = 0; //最近省代
+            //获取直接推荐人，推荐人user_ID为first_leader
+			$first_user = Db::name('users')
+                ->where("user_id", $first_leader)
+                ->find();
+			if($first_user){
 			    //获取推荐人等级
-                $dg_user_id = $tjj_users['user_id'];
-                $dg_user = $tjj_users;
-                $dg_level = $dg_user['level'];
+                $up_user_id = $first_user['user_id'];
+                $up_user = $first_user;
+                $up_level = $up_user['level'];
                 for(;;){
-                    if(!$dg_user_id>0){//无推荐人，循环结束
+                    if(!$up_user_id>0){//无推荐人，循环结束
                         break;
                     }
-                    if($dg_level=='4'){//找到了省代，循环结束
-                        $third_leader = $dg_user_id;
+                    if($up_level=='4'){//找到了省代，循环结束
+                        $third_leader = $up_user_id;
                         break;
                     }
                     //没有上级推荐人或者查询到省级代理 循环结束
-                    if($dg_level=='3'&&$second_leader==0){//等级为市代,且是最近一级市代
-                        $second_leader = $dg_user_id;
+                    if($up_level=='3'&&$second_leader==0){//等级为市代,且是最近一级市代
+                        $second_leader = $up_user_id;
                     }
-                    $dg_user_id = $dg_user['first_leader'];
-                    $dg_user = Db::name('users')->where('user_id',$dg_user_id)->find();
-                    $dg_level = $dg_user['level'];
+                    $up_user_id = $up_user['first_leader'];
+                    $up_user = Db::name('users')->where('user_id',$up_user_id)->find();
+                    $up_level = $up_user['level'];
                 }
-
 			}
 			//更新市代和省代
             $map['first_leader'] = $first_leader;
 			$map['second_leader'] = $second_leader;
 			$map['third_leader'] = $third_leader;
             //他上线代理的代理人数要加1
-            M('users')->where(array('user_id' => $map['first_leader']))->setInc('underling_number');
-            M('users')->where(array('user_id' => $map['second_leader']))->setInc('underling_number');
-            M('users')->where(array('user_id' => $map['third_leader']))->setInc('underling_number');
+            Db::name('users')->where(array('user_id' => $map['first_leader']))->setInc('underling_number');
+            Db::name('users')->where(array('user_id' => $map['second_leader']))->setInc('underling_number');
+            Db::name('users')->where(array('user_id' => $map['third_leader']))->setInc('underling_number');
 			
         }else{
 			$map['first_leader'] = 0;
 		}
 
-        // 成为分销商条件  
-        $distribut_condition = tpCache('distribut.condition'); 
-        /* if($distribut_condition == 0)  // 直接成为分销商, 每个人都可以做分销        
-            $map['is_distribut']  = 1; */
-			
-		
 		$map['is_lock']  = 0; // 默认 不冻结会员 可登陆	
 		$map['is_distribut']  = 1; // 默认 不可做分销
 			
