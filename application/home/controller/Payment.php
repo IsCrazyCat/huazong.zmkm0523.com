@@ -72,20 +72,20 @@ class Payment extends Base {
 					$distributLogic->rebate_log($order); // 生成分成记录
 					//$distributLogic->auto_confirm(); // 自动确认分成
 				}
-				update_user_level($this->user_id);
-				$myuser = M('users')->where("user_id", $this->user_id)->find();//李洪顺
-				$first_leader = $myuser['first_leader'];
-				if ( (int)$first_leader > 0 ) {
-					update_user_level($first_leader);
-				}
-				$second_leader = $myuser['second_leader'];
-				if ( (int)$second_leader > 0 ) {
-					update_user_level($second_leader);
-				}
-				$third_leader = $myuser['third_leader'];
-				if ( (int)$third_leader > 0 ) {
-					update_user_level($third_leader);
-				}
+//				update_user_level($this->user_id);
+//				$myuser = M('users')->where("user_id", $this->user_id)->find();//李洪顺
+//				$first_leader = $myuser['first_leader'];
+//				if ( (int)$first_leader > 0 ) {
+//					update_user_level($first_leader);
+//				}
+//				$second_leader = $myuser['second_leader'];
+//				if ( (int)$second_leader > 0 ) {
+//					update_user_level($second_leader);
+//				}
+//				$third_leader = $myuser['third_leader'];
+//				if ( (int)$third_leader > 0 ) {
+//					update_user_level($third_leader);
+//				}
 				
 				
             	$this->error('此订单，已完成支付!');
@@ -128,20 +128,20 @@ class Payment extends Base {
 				$distributLogic->rebate_log($order); // 生成分成记录
 				//$distributLogic->auto_confirm(); // 自动确认分成
 			}
-			update_user_level($this->user_id);
-			$myuser = M('users')->where("user_id", $this->user_id)->find();//李洪顺
-			$first_leader = $myuser['first_leader'];
-			if ( (int)$first_leader > 0 ) {
-				update_user_level($first_leader);
-			}
-			$second_leader = $myuser['second_leader'];
-			if ( (int)$second_leader > 0 ) {
-				update_user_level($second_leader);
-			}
-			$third_leader = $myuser['third_leader'];
-			if ( (int)$third_leader > 0 ) {
-				update_user_level($third_leader);
-			} 
+//			update_user_level($this->user_id);
+//			$myuser = M('users')->where("user_id", $this->user_id)->find();//李洪顺
+//			$first_leader = $myuser['first_leader'];
+//			if ( (int)$first_leader > 0 ) {
+//				update_user_level($first_leader);
+//			}
+//			$second_leader = $myuser['second_leader'];
+//			if ( (int)$second_leader > 0 ) {
+//				update_user_level($second_leader);
+//			}
+//			$third_leader = $myuser['third_leader'];
+//			if ( (int)$third_leader > 0 ) {
+//				update_user_level($third_leader);
+//			}
 			
     		$this->error('此订单，已完成支付!');
     	}

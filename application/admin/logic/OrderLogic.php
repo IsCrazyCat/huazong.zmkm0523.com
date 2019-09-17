@@ -243,21 +243,21 @@ class OrderLogic extends Model
     	}
     	// 根据order表查看消费记录 给他会员等级升级 修改他的折扣 和 总金额
     	M('order')->where("order_id=$order_id")->save(array('pay_status'=>0));
-    	update_user_level($order['user_id']);
-		
-		$myuser = M('users')->where("user_id", $order['user_id'])->find();//李洪顺
-		$first_leader = $myuser['first_leader'];
-		if ( (int)$first_leader > 0 ) {
-			update_user_level($first_leader);
-		}
-		$second_leader = $myuser['second_leader'];
-		if ( (int)$second_leader > 0 ) {
-			update_user_level($second_leader);
-		}
-		$third_leader = $myuser['third_leader'];
-		if ( (int)$third_leader > 0 ) {
-			update_user_level($third_leader);
-		}
+//    	update_user_level($order['user_id']);
+//
+//		$myuser = M('users')->where("user_id", $order['user_id'])->find();//李洪顺
+//		$first_leader = $myuser['first_leader'];
+//		if ( (int)$first_leader > 0 ) {
+//			update_user_level($first_leader);
+//		}
+//		$second_leader = $myuser['second_leader'];
+//		if ( (int)$second_leader > 0 ) {
+//			update_user_level($second_leader);
+//		}
+//		$third_leader = $myuser['third_leader'];
+//		if ( (int)$third_leader > 0 ) {
+//			update_user_level($third_leader);
+//		}
 
 		
 		
