@@ -64,40 +64,8 @@ function update_user_level($user_id){
         if($cur_user['level']==1){
             Db::name('users')->where('user_id',$user_id)->update(['level'=>'2']);
         }
-        $first_leader = $cur_user['first_leader'];
-        $first_user = Db::name("users")->where('user_id', $first_leader)->find();
-        $first_level = $first_user['level'];
-        if($first_level == '1' || $first_level == '2'){//推荐人为注册会员或入单会员
-            //查询推荐人的直推入单会员数  直接推荐人为first_leader
-            $first_count = Db::name("users")
-                ->where('first_leader =:first_leader and level in (2,3,4)')
-                ->bind("first_leader",$first_leader)
-                ->count();
-            if($first_count>=10){//升级为市代
-                //更新推荐人等级为市代，更新当前用户的second_leader即市代为推荐人ID（first_leader）
-                Db::name("users")->where('user_id',$first_leader)->update(['level'=>'3']);
-                update_underling_leader($first_leader);
-
-
-
-                //推荐人的推荐人
-                $tt_user = Db::name("users")->where('user_id', $first_user['first_leader'])->find();
-                $tt_user_level = $tt_user['level'];
-                if($tt_user_level=='3'){//推荐人的推荐人为市代
-                    $param = [
-                        'first_leader'=>$tt_user['user_id'],
-                        'level'=>array('in','3,4')
-                    ];
-                    $tt_count = Db::name("users")
-                        ->where($param)
-                        ->count();
-                    if($tt_count>=10){
-                        Db::name("users")->where('user_id',$tt_user['user_id'])->update(['level'=>'4']);
-                        Db::name('users')->where('user_id',$user_id)->update(['third_leader'=>$tt_user['user_id']]);
-                    }
-                }
-            }
-        }
+        //更新上级所有会员信息，是否升级为市代或省代
+        update_up_leader($cur_user['first_leader']);
     }
 }
 
@@ -109,108 +77,100 @@ function update_user_level($user_id){
  */
 function distribution_money_by_level($user_id){
     $cur_user = M('users')->where("user_id", $user_id)->find();//
-    //直接推荐人，二级推荐人(市代)，三级推荐人（省代） 利润发放完毕更新，没有则是0
+    //直接推荐人，二级推荐人(市代)，三级推荐人（省代） 奖励发放完毕更新，没有则是0
     $first_leader = $cur_user['first_leader'];//推荐人
     $second_leader = $cur_user['second_leader'];
     $third_leader = $cur_user['third_leader'];
-    $leaders = users_leader_all($user_id);
+    $reward_money = 0;//奖励金额
+//    $leaders = users_leader_all($user_id);
+//    $sd_users = $leaders['sd_users'];
+//    $sd_leader_users = $leaders['sd_leader_users'];
+    //是否有直接推荐人，若无 则市代和省代都不会有
     if($first_leader>0){
-
         $first_user = M('users')->where("user_id", $first_leader)->find();
-
-        //获取上级市代的直接推荐人，获取一元 即会员推荐市代，见点一元
-        if($second_leader>0){
-            $second_user =  Db::name('users')->where("user_id", $second_leader)->find();
-            if($second_user['first_leader']>0){
-                Db::name('users')->where('user_id',$second_user['first_leader'])->update(['user_money' => ['exp','user_money+'.'1']]);
-            }
-        }
-        $sd_users = $leaders['sd_users'];
-        $sd_leader_users = $leaders['sd_leader_users'];
         //是入单会员商品,检查是否首次购买
         if(check_rudan_first($user_id)){
             if(!$first_leader>0){
                 //无推荐人，则不进行奖励,该用户上面也没有对应的市代和省代
             }else{
-                //所有市代 见点两元
-                Db::name('users')
-                    ->where('user_id','in',$sd_users)
-                    ->update(['user_money' => ['exp','user_money+'.'2']]);
-                //所有省代 见点三元
-                Db::name('users')
-                    ->where('user_id','in',$sd_leader_users)
-                    ->update(['user_money' => ['exp','user_money+'.'3']]);
+
+//                //所有市代 见点两元 并不是所有的市代见点两元 而是只有最近的市代才会有见点2元
+//                Db::name('users')
+//                    ->where('user_id','in',$sd_users)
+//                    ->update(['user_money' => ['exp','user_money+'.'2']]);
+//                //所有省代 见点三元 并不是所有的省代见点两元 而是只有最近的省代才会有见点3元
+//                Db::name('users')
+//                    ->where('user_id','in',$sd_leader_users)
+//                    ->update(['user_money' => ['exp','user_money+'.'3']]);
                 if($first_user['level']==1||$first_user['level']==2){
                     //直接推荐人为注册会员或入单会员 获得300
                     Db::name('users')->where('user_id',$first_leader)->update(['user_money' => ['exp','user_money+'.'300']]);
-                    //间接市代获得100 见点2元 $second_leader为user_id 为0则没有市代
+                    //间接市代获得100 见点2元即奖励2元(最近市代才会获得见点2元) $second_leader为user_id 为0则没有市代
                     if($second_leader>0){
-                        $sd_money = 100 ;
-                        Db::name('users')->where('user_id',$second_leader)->update(['user_money' => ['exp','user_money+'.$sd_money]]);
-                        //平级市代
-                        $second_user =  Db::name('users')->where("user_id", $second_leader)->find();
-                        if($second_user['$second_leader']>0){
-                            $ss_sd_money = 50 ;
-                            Db::name('users')->where('user_id',$second_user['$second_leader'])->update(['user_money' => ['exp','user_money+'.$ss_sd_money]]);
+                        $reward_money = 100 + 2;
+                        Db::name('users')->where('user_id',$second_leader)->update(['user_money' => ['exp','user_money+'.$reward_money]]);
 
+                        $second_user =  Db::name('users')->where("user_id", $second_leader)->find();
+                        //获取上级市代的直接推荐人，获取一元 即会员推荐市代，见点一元
+                        if($second_user['first_leader']>0){
+                            $reward_money = 1;
+                            Db::name('users')->where('user_id',$second_user['first_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money]]);
                         }
+                        //平级市代 获得50元 并不获得见点2元的奖励
+                        if($second_user['$second_leader']>0){
+                            $reward_money = 50 ;
+                            Db::name('users')->where('user_id',$second_user['$second_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money]]);
+                        }
+                        //最近省代 获得50元，见点3元
                         if($third_leader>0){
-                            $sd_money = 50 ;
-                            Db::name('users')->where('user_id',$second_user['first_leader'])->update(['user_money' => ['exp','user_money+'.$sd_money]]);
+                            $reward_money = 50 + 3;
+                            Db::name('users')->where('user_id',$third_leader)->update(['user_money' => ['exp','user_money+'.$reward_money]]);
                         }
                     }else{
+                        //无市代 省代为间接，奖励100 + 见点3元
                         if($third_leader>0){
-                            $sd_money = 100 ;
-                            Db::name('users')->where('user_id',$second_user['first_leader'])->update(['user_money' => ['exp','user_money+'.$sd_money]]);
+                            $sd_money = 100 + 3 ;
+                            Db::name('users')->where('user_id',$third_leader)->update(['user_money' => ['exp','user_money+'.$sd_money]]);
                         }
                     }
                 }else  if($first_user['level']==3){
                     //直接推荐人为市代 获得400 + 2%报单奖 + 见点2元
-                    $sd_money = 400 + 680 * 2 / 100;
-                    Db::name('users')->where('user_id',$first_leader)->update(['user_money' => ['exp','user_money+'.$sd_money]]);
+                    $reward_money = 400 + 680 * 2 / 100 + 2;
+                    Db::name('users')->where('user_id',$first_leader)->update(['user_money' => ['exp','user_money+'.$reward_money]]);
 
-                    //平级市代
                     $second_user =  Db::name('users')->where("user_id", $second_leader)->find();
+                    if($second_user['$first_leader']>0){
+                        $reward_money = 1 ;
+                        Db::name('users')->where('user_id',$second_user['$first_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money]]);
+                    }
+                    //平级市代
                     if($second_user['$second_leader']>0){
-                        $ss_sd_money = 50 ;
-                        Db::name('users')->where('user_id',$second_user['$second_leader'])->update(['user_money' => ['exp','user_money+'.$ss_sd_money]]);
+                        $reward_money = 50 ;
+                        Db::name('users')->where('user_id',$second_user['$second_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money]]);
                     }
                     if($third_leader>0){
-                        $sd_money = 50 ;
-                        Db::name('users')->where('user_id',$third_leader)->update(['user_money' => ['exp','user_money+'.$sd_money]]);
+                        $reward_money = 50 + 3;
+                        Db::name('users')->where('user_id',$third_leader)->update(['user_money' => ['exp','user_money+'.$reward_money]]);
                     }
                 }else  if($first_user['level']==4){
                     //直接推荐人为省代 获取500+ 报单奖2% + 见点3元
-                    $sd_money = 680 * 2 / 100 + 500;
-                    Db::name('users')->where('user_id',$second_user['first_leader'])->update(['user_money' => ['exp','user_money+'.$sd_money]]);
+                    $reward_money = 680 * 2 / 100 + 500;
+                    Db::name('users')->where('user_id',$third_leader)->update(['user_money' => ['exp','user_money+'.$reward_money]]);
                 }
             }
-        }else{
-            //复消 购买金额为4折272
-            if($first_user['level']==1||$first_user['level']==2){
-                if($second_leader>0) {
-                    $sd_money =5 + 20;
-                    Db::name('users')->where('user_id', $second_leader)->update(['user_money' => ['exp', 'user_money+' . $sd_money]]);
-                    if($third_leader>0) {
-                        $sd_money =5;
-                        Db::name('users')->where('user_id', $third_leader)->update(['user_money' => ['exp', 'user_money+' . $sd_money]]);
-                    }
-                }else{
-                    if($third_leader>0) {
-                        $sd_money =5+20;
-                        Db::name('users')->where('user_id', $third_leader)->update(['user_money' => ['exp', 'user_money+' . $sd_money]]);
-                    }
-                }
-            }else if($first_user['level']==3){
-                $sd_money = 100+5;
-                Db::name('users')->where('user_id', $first_leader)->update(['user_money' => ['exp', 'user_money+' . $sd_money]]);
-                if($third_leader>0) {
-                    $sd_money =5+20;
-                    Db::name('users')->where('user_id', $third_leader)->update(['user_money' => ['exp', 'user_money+' . $sd_money]]);
-                }
-            }else if($first_user['level']==4){
-                $sd_money =5+100;
-                Db::name('users')->where('user_id', $third_leader)->update(['user_money' => ['exp', 'user_money+' . $sd_money]]);
+        }else {
+            //复消 购买金额为4折272 奖励的时候不论等级 直推100 直接推荐人的直推奖励20 最近市代和省代各获得5元
+            //直推 100
+            Db::name('users')->where('user_id', $first_leader)->update(['user_money' => ['exp', 'user_money+' . 100]]);
+            //间接 20
+            if ($first_user['first_leader'] > 0) {
+                Db::name('users')->where('user_id', $first_user['first_leader'])->update(['user_money' => ['exp', 'user_money+' . 20]]);
+            }
+            if ($second_leader > 0) {
+                Db::name('users')->where('user_id', $second_leader)->update(['user_money' => ['exp', 'user_money+' . 5]]);
+            }
+            if ($third_leader > 0) {
+                Db::name('users')->where('user_id', $third_leader)->update(['user_money' => ['exp', 'user_money+' . 5]]);
             }
         }
     }
@@ -272,35 +232,101 @@ function users_leader_all($user_id){
 
 /**
  * 当用户等级变动为市代或省代，更新所有伞下leader信息
- * @param $user_id 升级会员user_id
- * @param $level 升级后的级别 3市代 4省代
- * @return bool 是否更新完毕 ture更新完毕 false更新失败
+ * @param $user_id 初始是root_user_id  每次都找下一层 是变化的
+ * @param $root_user_id 等级发生改变的会员ID，其实就是升级为入单会员的直接推荐人的user_id
+ * @return
  */
-function update_underling_leader($user_id){
-    $cur_users = Db::name("users")->where('user_id', $user_id)->find();
-    $cur_level = $cur_users['level'];
-    if($cur_level == 3){//升级为市代
+function update_underling_leader($user_id,$root_user_id){
+    $root_users = Db::name("users")->where('user_id', $root_user_id)->find();
+    $root_level = $root_users['level'];
+    if($root_level == 3){//升级为市代
         //直接推荐人为当前会员的 first_leader = seconde_leader = 当前会员User_id
-        Db::name('users')->where('first_leader',$user_id)->update(['second_leader'=>$user_id]);
+        Db::name('users')->where('first_leader',$user_id)->update(['second_leader'=>$root_user_id]);
 
         $cur_users_unders = Db::name('users')->where('first_leader',$user_id)->select();
         foreach ($cur_users_unders as $key => $val){
             if($val['level']==4){
-                //等级为省代 不知道怎么处理
+                //等级为省代 等级为市代或省代 ->second_leader = 升级会员ID -> 结束
             }else if($val['level']==3){
                 //等级为市代 结束递归
             }else{
-                Db::name("users")
-                    ->where('user_id',$val['user_id'])
-                    ->update(['second_leader'=>$user_id]);
+                //等级为注册或入单会员 递归
+                update_underling_leader($val,$root_user_id);
+            }
+        }
+    }else if ($root_level == 4) {//升级为省代
+        //升级为省代 肯定已经执行过升级市代的逻辑，不用考虑了
+        Db::name('users')->where('first_leader',$user_id)->update(['third_leader'=>$root_user_id]);
+
+        $cur_users_unders = Db::name('users')->where('first_leader',$user_id)->select();
+        foreach ($cur_users_unders as $key => $val){
+            if($val['level']==4){
+                //等级为省代 等级为市代或省代 ->second_leader = 升级会员ID -> 结束
+            }else if($val['level']==3){
+                //等级为市代 递归
+                update_underling_leader($val,$root_user_id);
+            }else{
+                //等级为注册或入单会员 递归
+                update_underling_leader($val,$root_user_id);
             }
         }
     }
-
-    return false;
 }
-function level_up_sd(){
 
+/**
+ * 更新上级等级
+ * @param $user_id该会员下的一个会员变成了入单会员
+ * 传入的user_id是成为入单会员的直接推荐人ID
+ */
+function update_up_leader($user_id){
+    //等级提升的市代的直接推荐人
+    $user = Db::name("users")
+        ->where('user_id', $user_id)
+        ->find();
+    if($user){
+        $user_level = $user['level'];
+        if($user_level==1||$user_level==2){//直接推荐人为注册会员或入单会员
+            $param = [
+                'first_leader'=>$user_id,
+                'level'=>array('in','3,4')
+            ];
+            $up_underling_count = Db::name("users")
+                ->where($param)
+                ->count();
+            if($up_underling_count>=10){
+                Db::name("users")->where('user_id',$user_id)->update(['level'=>'4']);
+
+                update_up_leader($user['first_leader']);
+                update_underling_leader($user_id,$user_id);
+            }else{
+                $param['level'] = array('in','2,3,4');
+                $up_underling_count = Db::name("users")
+                    ->where($param)
+                    ->count();
+                if($up_underling_count>=10){
+                    Db::name("users")->where('user_id',$user_id)->update(['level'=>'3']);
+                    update_up_leader($user['first_leader']);
+                    update_underling_leader($user_id,$user_id);
+                }
+            }
+        }else if($user_level==3){
+            $param = [
+                'first_leader'=>$user_id,
+                'level'=>array('in','3,4')
+            ];
+            $up_underling_count = Db::name("users")
+                ->where($param)
+                ->count();
+            if($up_underling_count>=10){
+                Db::name("users")->where('user_id',$user_id)->update(['level'=>'4']);
+                //市代升级为省代 并不会造成等级上的改变
+//                update_up_leader($up_user['user_id']);
+                update_underling_leader($user_id,$user_id);
+            }
+        }else{
+            //推荐人为省代
+        }
+    }
 }
 
 /**
