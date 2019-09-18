@@ -251,7 +251,7 @@ function update_underling_leader($user_id,$root_user_id){
                 //等级为市代 结束递归
             }else{
                 //等级为注册或入单会员 递归
-                update_underling_leader($val,$root_user_id);
+                update_underling_leader($val['user_id'],$root_user_id);
             }
         }
     }else if ($root_level == 4) {//升级为省代
@@ -264,10 +264,10 @@ function update_underling_leader($user_id,$root_user_id){
                 //等级为省代 等级为市代或省代 ->second_leader = 升级会员ID -> 结束
             }else if($val['level']==3){
                 //等级为市代 递归
-                update_underling_leader($val,$root_user_id);
+                update_underling_leader($val['user_id'],$root_user_id);
             }else{
                 //等级为注册或入单会员 递归
-                update_underling_leader($val,$root_user_id);
+                update_underling_leader($val['user_id'],$root_user_id);
             }
         }
     }
@@ -295,9 +295,8 @@ function update_up_leader($user_id){
                 ->count();
             if($up_underling_count>=10){
                 Db::name("users")->where('user_id',$user_id)->update(['level'=>'4']);
-
+                update_underling_leader($user_id,$user_id);//必须放在递归前执行，不然等级提升之后伞下无法更新市代和省代
                 update_up_leader($user['first_leader']);
-                update_underling_leader($user_id,$user_id);
             }else{
                 $param['level'] = array('in','2,3,4');
                 $up_underling_count = Db::name("users")
@@ -305,8 +304,8 @@ function update_up_leader($user_id){
                     ->count();
                 if($up_underling_count>=10){
                     Db::name("users")->where('user_id',$user_id)->update(['level'=>'3']);
-                    update_up_leader($user['first_leader']);
                     update_underling_leader($user_id,$user_id);
+                    update_up_leader($user['first_leader']);
                 }
             }
         }else if($user_level==3){
