@@ -58,19 +58,17 @@ function get_user_info($user_id_or_name,$type = 0,$oauth=''){
  * @return boolean
  */
 function update_user_level($user_id){
-    if(check_rudan_first($user_id)){
-        $cur_user = Db::name("users")->where('user_id',$user_id)->find();
-        //首次购买 若当前用户等级为注册会员则更新为入单会员，否则不更新等级
-        if($cur_user['level']==1){
-            Db::name('users')->where('user_id',$user_id)->update(['level'=>'2']);
-        }
-        //更新上级所有会员信息，是否升级为市代或省代
-        update_up_leader($cur_user['first_leader']);
+    $cur_user = Db::name("users")->where('user_id',$user_id)->find();
+    //首次购买 若当前用户等级为注册会员则更新为入单会员，否则不更新等级
+    if($cur_user['level']==1){
+        Db::name('users')->where('user_id',$user_id)->update(['level'=>'2']);
     }
+    //更新上级所有会员信息，是否升级为市代或省代
+    update_up_leader($cur_user['first_leader']);
 }
 
 /**
- * 分配购买入单返润
+ * 分配购买入单奖励
  * 后更新用户等级
  * 只有首次购买入单商品才会触发
  * @param $user_id
@@ -117,9 +115,9 @@ function distribution_money_by_level($user_id){
                             Db::name('users')->where('user_id',$second_user['first_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money]]);
                         }
                         //平级市代 获得50元 并不获得见点2元的奖励
-                        if($second_user['$second_leader']>0){
+                        if($second_user['second_leader']>0){
                             $reward_money = 50 ;
-                            Db::name('users')->where('user_id',$second_user['$second_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money]]);
+                            Db::name('users')->where('user_id',$second_user['second_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money]]);
                         }
                         //最近省代 获得50元，见点3元
                         if($third_leader>0){
@@ -139,14 +137,14 @@ function distribution_money_by_level($user_id){
                     Db::name('users')->where('user_id',$first_leader)->update(['user_money' => ['exp','user_money+'.$reward_money]]);
 
                     $second_user =  Db::name('users')->where("user_id", $second_leader)->find();
-                    if($second_user['$first_leader']>0){
+                    if($second_user['first_leader']>0){
                         $reward_money = 1 ;
-                        Db::name('users')->where('user_id',$second_user['$first_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money]]);
+                        Db::name('users')->where('user_id',$second_user['first_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money]]);
                     }
                     //平级市代
-                    if($second_user['$second_leader']>0){
+                    if($second_user['second_leader']>0){
                         $reward_money = 50 ;
-                        Db::name('users')->where('user_id',$second_user['$second_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money]]);
+                        Db::name('users')->where('user_id',$second_user['second_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money]]);
                     }
                     if($third_leader>0){
                         $reward_money = 50 + 3;
@@ -158,6 +156,12 @@ function distribution_money_by_level($user_id){
                     Db::name('users')->where('user_id',$third_leader)->update(['user_money' => ['exp','user_money+'.$reward_money]]);
                 }
             }
+            //只有首次购买入单商品，才会更新会员等级
+            update_user_level($user_id);
+            //首次购买奖励发放完成，将首次购买状态is_buy_rudan修改为1 已购买过入单商品
+            Db::name('users')
+                ->where('user_id',$user_id)
+                ->update(['is_buy_rudan'=>1]);
         }else {
             //复消 购买金额为4折272 奖励的时候不论等级 直推100 直接推荐人的直推奖励20 最近市代和省代各获得5元
             //直推 100
@@ -241,32 +245,36 @@ function update_underling_leader($user_id,$root_user_id){
     $root_level = $root_users['level'];
     if($root_level == 3){//升级为市代
         //直接推荐人为当前会员的 first_leader = seconde_leader = 当前会员User_id
-        Db::name('users')->where('first_leader',$user_id)->update(['second_leader'=>$root_user_id]);
 
         $cur_users_unders = Db::name('users')->where('first_leader',$user_id)->select();
         foreach ($cur_users_unders as $key => $val){
-            if($val['level']==4){
+            if($val['level']==4||$val['level']==3){
                 //等级为省代 等级为市代或省代 ->second_leader = 升级会员ID -> 结束
-            }else if($val['level']==3){
-                //等级为市代 结束递归
+                Db::name('users')->where('first_leader',$user_id)->update(['second_leader'=>$root_user_id]);
             }else{
                 //等级为注册或入单会员 递归
+                Db::name('users')->where('first_leader',$user_id)->update(['second_leader'=>$root_user_id]);
                 update_underling_leader($val['user_id'],$root_user_id);
             }
         }
     }else if ($root_level == 4) {//升级为省代
         //升级为省代 肯定已经执行过升级市代的逻辑，不用考虑了
-        Db::name('users')->where('first_leader',$user_id)->update(['third_leader'=>$root_user_id]);
+
+        //如果升级之前为市代，则把之前将$root_user_id作为市代的值清空，即second_leader为0 因为升级为省代了
+        Db::name('users')->where('second_leader',$root_user_id)->update(['second_leader'=>0]);
 
         $cur_users_unders = Db::name('users')->where('first_leader',$user_id)->select();
         foreach ($cur_users_unders as $key => $val){
             if($val['level']==4){
                 //等级为省代 等级为市代或省代 ->second_leader = 升级会员ID -> 结束
+                Db::name('users')->where('first_leader',$user_id)->update(['third_leader'=>$root_user_id]);
             }else if($val['level']==3){
                 //等级为市代 递归
+                Db::name('users')->where('first_leader',$user_id)->update(['third_leader'=>$root_user_id]);
                 update_underling_leader($val['user_id'],$root_user_id);
             }else{
                 //等级为注册或入单会员 递归
+                Db::name('users')->where('first_leader',$user_id)->update(['third_leader'=>$root_user_id]);
                 update_underling_leader($val['user_id'],$root_user_id);
             }
         }
@@ -1132,8 +1140,6 @@ function update_pay_status($order_sn,$ext=array())
         //根据商品名称 判定是否购买680入单会员商品
         if( 0 == strcmp($orderGoodsArr['goods_name'],"入单商品")){
             distribution_money_by_level($order['user_id']);
-            //只有购买入单商品，才会更新会员等级
-            update_user_level($order['user_id']);
         }
 
 		
@@ -1161,9 +1167,9 @@ function update_pay_status($order_sn,$ext=array())
         //分销设置
         M('rebate_log')->where("order_id" ,$order['order_id'])->save(array('status'=>1));
         // 成为分销商条件
-        $distribut_condition = tpCache('distribut.condition');
-        if($distribut_condition == 1)  // 购买商品付款才可以成为分销商
-            M('users')->where("user_id", $order['user_id'])->save(array('is_distribut'=>1));
+//        $distribut_condition = tpCache('distribut.condition');
+//        if($distribut_condition == 1)  // 购买商品付款才可以成为分销商
+//            M('users')->where("user_id", $order['user_id'])->save(array('is_distribut'=>1));
 
         //用户支付, 发送短信给商家
         $res = checkEnableSendSms("4");
@@ -1180,26 +1186,17 @@ function update_pay_status($order_sn,$ext=array())
 /**
  *
  * @param $user_id 用户ID
- * @return bool true 首次购买
+ * @return bool ture:首次购买 false:已购买过
  *
  */
 function check_rudan_first($user_id){
-    $paramMap = [
-        'o.`user_id`'=>$user_id,
-        'o.order_status'=>array('in','1,2,3'),
-        'og.`goods_name`'=>array('like','%入单%')
-    ];
-    $orderList = Db::name('order')
-        ->alias('o')
-        ->join('OrderGoods og','o.`order_id` = og.`order_id`')
-        ->where($paramMap)
+    $user = Db::name("users")
+        ->where('user_id',$user_id)
         ->find();
-    if(empty($orderList)){
-        //首次购买
-        return ture;
-    }else{
-        //复消 购买金额为4折
+    if($user['is_buy_rudan']){
         return false;
+    }else{
+        return ture;
     }
 }
 

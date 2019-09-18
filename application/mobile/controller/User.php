@@ -209,7 +209,7 @@ class User extends MobileBase
             $res['url'] = urldecode(I('post.referurl'));
             session('user', $res['result']);
             setcookie('user_id', $res['result']['user_id'], null, '/');
-            setcookie('is_distribut', $res['result']['is_distribut'], null, '/');
+//            setcookie('is_distribut', $res['result']['is_distribut'], null, '/');
             $nickname = empty($res['result']['nickname']) ? $username : $res['result']['nickname'];
             setcookie('uname', urlencode($nickname), null, '/');
             setcookie('cn', 0, time() - 3600, '/');
@@ -284,7 +284,7 @@ class User extends MobileBase
                 
             session('user', $data['result']);
             setcookie('user_id', $data['result']['user_id'], null, '/');
-            setcookie('is_distribut', $data['result']['is_distribut'], null, '/');
+//            setcookie('is_distribut', $data['result']['is_distribut'], null, '/');
             $cartLogic = new \app\home\logic\CartLogic();
             $cartLogic->setUserId($data['result']['user_id']);
 			

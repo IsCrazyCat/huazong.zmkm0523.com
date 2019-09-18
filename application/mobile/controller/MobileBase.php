@@ -62,7 +62,7 @@ class MobileBase extends Controller {
                     if($data['status'] == 1){
                         session('user',$data['result']);
                         setcookie('user_id',$data['result']['user_id'],null,'/');
-                        setcookie('is_distribut',$data['result']['is_distribut'],null,'/');
+//                        setcookie('is_distribut',$data['result']['is_distribut'],null,'/');
                         setcookie('uname',$data['result']['nickname'],null,'/');                    
                         // 登录后将购物车的商品的 user_id 改为当前登录的id
                         M('cart')->where("session_id", $this->session_id)->save(array('user_id'=>$data['result']['user_id']));
