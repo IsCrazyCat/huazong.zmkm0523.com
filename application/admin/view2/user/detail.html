@@ -54,12 +54,12 @@
                 </dt>
                 <dd class="opt"><strong class="red">{$user.user_money}</strong>&nbsp;元 </dd>
             </dl>
-            <dl class="row">
-                <dt class="tit">
-                    <label>冻结余额</label>
-                </dt>
-                <dd class="opt"><strong class="red">{$user.frozen_money}</strong>&nbsp;元 </dd>
-            </dl>
+<!--            <dl class="row">-->
+<!--                <dt class="tit">-->
+<!--                    <label>冻结余额</label>-->
+<!--                </dt>-->
+<!--                <dd class="opt"><strong class="red">{$user.frozen_money}</strong>&nbsp;元 </dd>-->
+<!--            </dl>-->
             <dl class="row">
                 <dt class="tit">
                     <label for="email"><em></em>电子邮箱</label>
@@ -213,20 +213,20 @@ function upperCase(x)
                     <p class="notic">如果冻结会员，会员将不能操作资金。</p>
                 </dd>
             </dl>
-            <dl class="row">
-                <dt class="tit">
-                    <label>分销功能</label>
-                </dt>
-                <dd class="opt">
-                    <div class="onoff">
-                        <label for="is_distribut1" class="cb-enable <if condition="$user['is_distribut'] eq 1">selected</if>"><span>开启</span></label>
-                        <label for="is_distribut2" class="cb-disable <if condition="$user['is_distribut'] eq 0">selected</if>"><span>关闭</span></label>
-                        <input id="is_distribut1" name="is_distribut" value="1" type="radio" <if condition="$user['is_distribut'] eq 1">checked</if>>
-                        <input id="is_distribut2" name="is_distribut" value="0" type="radio" <if condition="$user['is_distribut'] eq 0">checked</if>>
-                    </div>
-                    <p class="notic">如果开启，会员参与分销。</p>
-                </dd>
-            </dl>
+<!--            <dl class="row">-->
+<!--                <dt class="tit">-->
+<!--                    <label>分销功能</label>-->
+<!--                </dt>-->
+<!--                <dd class="opt">-->
+<!--                    <div class="onoff">-->
+<!--                        <label for="is_distribut1" class="cb-enable <if condition="$user['is_distribut'] eq 1">selected</if>"><span>开启</span></label>-->
+<!--                        <label for="is_distribut2" class="cb-disable <if condition="$user['is_distribut'] eq 0">selected</if>"><span>关闭</span></label>-->
+<!--                        <input id="is_distribut1" name="is_distribut" value="1" type="radio" <if condition="$user['is_distribut'] eq 1">checked</if>>-->
+<!--                        <input id="is_distribut2" name="is_distribut" value="0" type="radio" <if condition="$user['is_distribut'] eq 0">checked</if>>-->
+<!--                    </div>-->
+<!--                    <p class="notic">如果开启，会员参与分销。</p>-->
+<!--                </dd>-->
+<!--            </dl>-->
             <dl class="row">
                 <dt class="tit">
                 </dt>
@@ -235,9 +235,9 @@ function upperCase(x)
                         <span class="span_1">
                             <ul>
                                 <li>可用余额</li>
-                                <li>上一级编号</li>
-                                <li>上二级编号</li>
-                                <li>上三级编号</li>
+                                <li>直接推荐人</li>
+                                <li>市级代理</li>
+                                <li>省级代理</li>
                             </ul>
                         </span>
                         <span class="span_1">
@@ -268,7 +268,7 @@ function upperCase(x)
                         </span>
                         <span class="span_1">
                             <ul>
-                                <li>累积分佣金额</li>
+                                <li>可用积分</li>
                                 <li>一级代理数</li>
                                 <li>二级代理数</li>
                                 <li>三级代理数</li>
@@ -276,7 +276,7 @@ function upperCase(x)
                         </span>
                         <span class="span_1">
                             <ul>
-                                <li><strong class="red">{$user.distribut_money}</strong>&nbsp;元 </li>
+                                <li><strong class="red">{$user.pay_points}</strong>&nbsp; </li>
                                 <li>
                                     <if condition='$user[first_lower] gt 0'>
                                         <a href="{:U(index,array('first_leader'=>$user[user_id]))}">{$user.first_lower}</a>

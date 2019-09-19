@@ -46,12 +46,12 @@
                         <th align="center" axis="col5" class="">
                             <div style="text-align: center; width: 100px;" class="">用户资金</div>
                         </th>
-                        <th align="center" axis="col6" class="">
-                            <div style="text-align: center; width: 100px;" class="">冻结资金</div>
-                        </th>
                         <!--<th align="center" axis="col6" class="">
-                            <div style="text-align: center; width: 100px;" class="">用户积分</div>
+                            <div style="text-align: center; width: 100px;" class="">冻结资金</div>
                         </th>-->
+                        <th align="center" axis="col6" class="">
+                            <div style="text-align: center; width: 100px;" class="">用户积分</div>
+                        </th>
                         <th align="center" axis="col6" class="">
                             <div style="text-align: center; width: 200px;" class="">奖项名称</div>
                         </th>
@@ -103,18 +103,18 @@
                                     {$list.user_money}
                                 </div>
                             </td>
-                            <td align="center" class="">
+                            <!--<td align="center" class="">
                                 <div style="text-align: center; width: 100px;">
                                     <if condition="$list[frozen_money] gt 0">+</if>
                                     {$list.frozen_money}
                                 </div>
-                            </td>
-                            <!--<td align="center" class="">
+                            </td>-->
+                            <td align="center" class="">
                                 <div style="text-align: center; width: 100px;">
                                     <if condition="$list[pay_points] gt 0">+</if>
                                     {$list.pay_points}
                                 </div>
-                            </td>-->
+                            </td>
                             <td align="center" class="">
                                 <div style="text-align: center; width: 200px;">
                                     {$list.jxmc}

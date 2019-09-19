@@ -15,4 +15,10 @@ class Testg extends MobileBase
     public function update_up_leader($user_id){
         update_up_leader($user_id);
     }
+    public function test(){
+        $a=$b=5;
+//        echo $a.$b;
+        $c = $a + 10;
+        echo $c;
+    }
 }

@@ -212,9 +212,9 @@ class Cart extends MobileBase {
 //                }
                 $pay_name = $user_money ? '余额支付' : '积分兑换';
             }
-            if(empty($coupon_id) && !empty($couponCode)){
-                $coupon_id = M('CouponList')->where("code", $couponCode)->getField('id');
-            }
+//            if(empty($coupon_id) && !empty($couponCode)){
+////                $coupon_id = M('CouponList')->where("code", $couponCode)->getField('id');
+////            }
             $orderLogic = new OrderLogic();
             $result = $orderLogic->addOrder($this->user_id,$address_id,$shipping_code,$invoice_title,$coupon_id,$car_price,$user_note,$pay_name); // 添加订单
             exit(json_encode($result));

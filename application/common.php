@@ -73,8 +73,8 @@ function update_user_level($user_id){
  * 只有首次购买入单商品才会触发
  * @param $user_id
  */
-function distribution_money_by_level($user_id){
-    $cur_user = M('users')->where("user_id", $user_id)->find();//
+function distribution_money_by_level($user_id,$order_id){
+    $cur_user = Db::name('users')->where("user_id", $user_id)->find();//
     //直接推荐人，二级推荐人(市代)，三级推荐人（省代） 奖励发放完毕更新，没有则是0
     $first_leader = $cur_user['first_leader'];//推荐人
     $second_leader = $cur_user['second_leader'];
@@ -85,13 +85,20 @@ function distribution_money_by_level($user_id){
 //    $sd_leader_users = $leaders['sd_leader_users'];
     //是否有直接推荐人，若无 则市代和省代都不会有
     if($first_leader>0){
-        $first_user = M('users')->where("user_id", $first_leader)->find();
+        $first_user = Db::name('users')->where("user_id", $first_leader)->find();
+
+        $order = Db::name('order')->master()->where("order_id",$order_id)->find();
+        // 记录log 日志
+        $account_log['change_time'] = time();
+        $account_log['desc'] = '入单奖励';
+        $account_log['order_sn'] = $order['order_sn'];
+        $account_log['order_id'] = $order_id;
+        $account_log['jxmc'] = '入单奖励';
         //是入单会员商品,检查是否首次购买
         if(check_rudan_first($user_id)){
             if(!$first_leader>0){
                 //无推荐人，则不进行奖励,该用户上面也没有对应的市代和省代
             }else{
-
 //                //所有市代 见点两元 并不是所有的市代见点两元 而是只有最近的市代才会有见点2元
 //                Db::name('users')
 //                    ->where('user_id','in',$sd_users)
@@ -102,58 +109,144 @@ function distribution_money_by_level($user_id){
 //                    ->update(['user_money' => ['exp','user_money+'.'3']]);
                 if($first_user['level']==1||$first_user['level']==2){
                     //直接推荐人为注册会员或入单会员 获得300
-                    Db::name('users')->where('user_id',$first_leader)->update(['user_money' => ['exp','user_money+'.'300']]);
+                    $reward_money = 300;
+                    Db::name('users')->where('user_id',$first_leader)->update(['user_money' => ['exp','user_money+'.$reward_money],'distribut_money'=>['exp','distribut_money+'.$reward_money]]);
+                    $account_log['user_id'] = $first_leader;
+                    $account_log['desc'] = "用户{$user_id}入单 直推奖励300元";
+                    $account_log['user_money'] =$account_log['distribut_money'] = $reward_money;
+                    Db::name('accountLog')->data($account_log)->insert();
                     //间接市代获得100 见点2元即奖励2元(最近市代才会获得见点2元) $second_leader为user_id 为0则没有市代
                     if($second_leader>0){
                         $reward_money = 100 + 2;
-                        Db::name('users')->where('user_id',$second_leader)->update(['user_money' => ['exp','user_money+'.$reward_money]]);
+                        Db::name('users')->where('user_id',$second_leader)->update(['user_money' => ['exp','user_money+'.$reward_money],'distribut_money'=>['exp','distribut_money+'.$reward_money]]);
+                        $account_log['user_id'] = $second_leader;
+                        $account_log['desc'] = "用户{$user_id}入单 间接市代推荐奖励100元";
+                        $account_log['user_money'] =$account_log['distribut_money'] = 100;
+                        Db::name('accountLog')->data($account_log)->insert();
+
+                        $account_log['user_id'] = $second_leader;
+                        $account_log['desc'] = "用户{$user_id}入单 间接市代见点2元奖励";
+                        $account_log['user_money'] =$account_log['distribut_money'] = 2;
+                        Db::name('accountLog')->data($account_log)->insert();
 
                         $second_user =  Db::name('users')->where("user_id", $second_leader)->find();
                         //获取上级市代的直接推荐人，获取一元 即会员推荐市代，见点一元
                         if($second_user['first_leader']>0){
                             $reward_money = 1;
-                            Db::name('users')->where('user_id',$second_user['first_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money]]);
+                            Db::name('users')->where('user_id',$second_user['first_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money],'distribut_money'=>['exp','distribut_money+'.$reward_money]]);
+                            $account_log['user_id'] = $second_user['first_leader'];
+                            $account_log['desc'] = "用户{$user_id}入单 市代直推见点1元奖励";
+                            $account_log['user_money'] =$account_log['distribut_money'] = $reward_money;
+                            Db::name('accountLog')->data($account_log)->insert();
                         }
                         //平级市代 获得50元 并不获得见点2元的奖励
                         if($second_user['second_leader']>0){
                             $reward_money = 50 ;
-                            Db::name('users')->where('user_id',$second_user['second_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money]]);
+                            Db::name('users')->where('user_id',$second_user['second_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money],'distribut_money'=>['exp','distribut_money+'.$reward_money]]);
+                            $account_log['user_id'] = $second_user['second_leader'];
+                            $account_log['desc'] = "用户{$user_id}入单 平级市代奖励50元";
+                            $account_log['user_money'] =$account_log['distribut_money'] = $reward_money;
+                            Db::name('accountLog')->data($account_log)->insert();
                         }
                         //最近省代 获得50元，见点3元
                         if($third_leader>0){
                             $reward_money = 50 + 3;
-                            Db::name('users')->where('user_id',$third_leader)->update(['user_money' => ['exp','user_money+'.$reward_money]]);
+                            Db::name('users')->where('user_id',$third_leader)->update(['user_money' => ['exp','user_money+'.$reward_money],'distribut_money'=>['exp','distribut_money+'.$reward_money]]);
+                            $account_log['user_id'] = $third_leader;
+                            $account_log['desc'] = "用户{$user_id}入单 省代奖励50元";
+                            $account_log['user_money'] =$account_log['distribut_money'] = 50;
+                            Db::name('accountLog')->data($account_log)->insert();
+
+                            $account_log['user_id'] = $third_leader;
+                            $account_log['desc'] = "用户{$user_id}入单 省代见点3元奖励";
+                            $account_log['user_money'] =$account_log['distribut_money'] = 3;
+                            Db::name('accountLog')->data($account_log)->insert();
                         }
                     }else{
                         //无市代 省代为间接，奖励100 + 见点3元
                         if($third_leader>0){
-                            $sd_money = 100 + 3 ;
-                            Db::name('users')->where('user_id',$third_leader)->update(['user_money' => ['exp','user_money+'.$sd_money]]);
+                            $reward_money = 100 + 3 ;
+                            Db::name('users')->where('user_id',$third_leader)->update(['user_money' => ['exp','user_money+'.$reward_money],'distribut_money'=>['exp','distribut_money+'.$reward_money]]);
+
+                            $account_log['user_id'] = $third_leader;
+                            $account_log['desc'] = "用户{$user_id}入单 间接省代奖励100元";
+                            $account_log['user_money'] =$account_log['distribut_money'] = 100;
+                            Db::name('accountLog')->data($account_log)->insert();
+
+                            $account_log['user_id'] = $third_leader;
+                            $account_log['desc'] = "用户{$user_id}入单 省代见点3元奖励";
+                            $account_log['user_money'] =$account_log['distribut_money'] = 3;
+                            Db::name('accountLog')->data($account_log)->insert();
                         }
                     }
                 }else  if($first_user['level']==3){
                     //直接推荐人为市代 获得400 + 2%报单奖 + 见点2元
                     $reward_money = 400 + 680 * 2 / 100 + 2;
-                    Db::name('users')->where('user_id',$first_leader)->update(['user_money' => ['exp','user_money+'.$reward_money]]);
+                    Db::name('users')->where('user_id',$first_leader)->update(['user_money' => ['exp','user_money+'.$reward_money],'distribut_money'=>['exp','distribut_money+'.$reward_money]]);
+                    $account_log['user_id'] = $first_leader;
+                    $account_log['desc'] = "用户{$user_id}入单 市代直推奖励400元";
+                    $account_log['user_money'] =$account_log['distribut_money'] = 400;
+                    Db::name('accountLog')->data($account_log)->insert();
+
+                    $account_log['user_id'] = $first_leader;
+                    $account_log['desc'] = "用户{$user_id}入单 市代直推报单中心奖励13.6元";
+                    $account_log['user_money'] =$account_log['distribut_money'] = 13.6;
+                    Db::name('accountLog')->data($account_log)->insert();
+
+                    $account_log['user_id'] = $first_leader;
+                    $account_log['desc'] = "用户{$user_id}入单 市代见点2元奖励";
+                    $account_log['user_money'] =$account_log['distribut_money'] = 2;
+                    Db::name('accountLog')->data($account_log)->insert();
 
                     $second_user =  Db::name('users')->where("user_id", $second_leader)->find();
                     if($second_user['first_leader']>0){
                         $reward_money = 1 ;
-                        Db::name('users')->where('user_id',$second_user['first_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money]]);
+                        Db::name('users')->where('user_id',$second_user['first_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money],'distribut_money'=>['exp','distribut_money+'.$reward_money]]);
+                        $account_log['user_id'] = $second_user['first_leader'];
+                        $account_log['desc'] = "用户{$user_id}入单 市代直推见点1元奖励";
+                        $account_log['user_money'] =$account_log['distribut_money'] = $reward_money;
+                        Db::name('accountLog')->data($account_log)->insert();
                     }
                     //平级市代
                     if($second_user['second_leader']>0){
                         $reward_money = 50 ;
-                        Db::name('users')->where('user_id',$second_user['second_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money]]);
+                        Db::name('users')->where('user_id',$second_user['second_leader'])->update(['user_money' => ['exp','user_money+'.$reward_money],'distribut_money'=>['exp','distribut_money+'.$reward_money]]);
+                        $account_log['user_id'] = $second_user['second_leader'];
+                        $account_log['desc'] = "用户{$user_id}入单 平级市代奖励50元";
+                        $account_log['user_money'] =$account_log['distribut_money'] = $reward_money;
+                        Db::name('accountLog')->data($account_log)->insert();
                     }
                     if($third_leader>0){
                         $reward_money = 50 + 3;
-                        Db::name('users')->where('user_id',$third_leader)->update(['user_money' => ['exp','user_money+'.$reward_money]]);
+                        Db::name('users')->where('user_id',$third_leader)->update(['user_money' => ['exp','user_money+'.$reward_money],'distribut_money'=>['exp','distribut_money+'.$reward_money]]);
+                        $account_log['user_id'] = $third_leader;
+                        $account_log['desc'] = "用户{$user_id}入单 省代奖励50元";
+                        $account_log['user_money'] =$account_log['distribut_money'] = 50;
+                        Db::name('accountLog')->data($account_log)->insert();
+
+                        $account_log['user_id'] = $third_leader;
+                        $account_log['desc'] = "用户{$user_id}入单 省代见点3元奖励";
+                        $account_log['user_money'] =$account_log['distribut_money'] = 3;
+                        Db::name('accountLog')->data($account_log)->insert();
                     }
                 }else  if($first_user['level']==4){
                     //直接推荐人为省代 获取500+ 报单奖2% + 见点3元
                     $reward_money = 680 * 2 / 100 + 500;
-                    Db::name('users')->where('user_id',$third_leader)->update(['user_money' => ['exp','user_money+'.$reward_money]]);
+                    Db::name('users')->where('user_id',$third_leader)->update(['user_money' => ['exp','user_money+'.$reward_money],'distribut_money'=>['exp','distribut_money+'.$reward_money]]);
+                    $account_log['user_id'] = $third_leader;
+                    $account_log['desc'] = "用户{$user_id}入单 省代直推奖励500元";
+                    $account_log['user_money'] =$account_log['distribut_money'] = 500;
+                    Db::name('accountLog')->data($account_log)->insert();
+
+                    $account_log['user_id'] = $third_leader;
+                    $account_log['desc'] = "用户{$user_id}入单 省代直推报单中心奖励13.6元";
+                    $account_log['user_money'] =$account_log['distribut_money'] = 13.6;
+                    Db::name('accountLog')->data($account_log)->insert();
+
+                    $account_log['user_id'] = $third_leader;
+                    $account_log['desc'] = "用户{$user_id}入单 省代见点2元奖励";
+                    $account_log['user_money'] =$account_log['distribut_money'] = 3;
+                    Db::name('accountLog')->data($account_log)->insert();
                 }
             }
             //只有首次购买入单商品，才会更新会员等级
@@ -165,16 +258,33 @@ function distribution_money_by_level($user_id){
         }else {
             //复消 购买金额为4折272 奖励的时候不论等级 直推100 直接推荐人的直推奖励20 最近市代和省代各获得5元
             //直推 100
-            Db::name('users')->where('user_id', $first_leader)->update(['user_money' => ['exp', 'user_money+' . 100]]);
+            Db::name('users')->where('user_id', $first_leader)->update(['user_money' => ['exp', 'user_money+'. 100],'distribut_money' => ['exp','distribut_money+'. 100]]);
+            $account_log['user_id'] = $first_leader;
+            $account_log['desc'] = "用户{$user_id}入单 复购直推奖励100元";
+            $account_log['user_money'] =$account_log['distribut_money'] = 100;
+            Db::name('accountLog')->data($account_log)->insert();
+
             //间接 20
             if ($first_user['first_leader'] > 0) {
-                Db::name('users')->where('user_id', $first_user['first_leader'])->update(['user_money' => ['exp', 'user_money+' . 20]]);
+                Db::name('users')->where('user_id', $first_user['first_leader'])->update(['user_money' => ['exp', 'user_money+'. 20],'distribut_money' => ['exp','distribut_money+'. 20]]);
+                $account_log['user_id'] = $first_user['first_leader'];
+                $account_log['desc'] = "用户{$user_id}入单 复购间接推荐奖励20元";
+                $account_log['user_money'] =$account_log['distribut_money'] = 20;
+                Db::name('accountLog')->data($account_log)->insert();
             }
             if ($second_leader > 0) {
-                Db::name('users')->where('user_id', $second_leader)->update(['user_money' => ['exp', 'user_money+' . 5]]);
+                Db::name('users')->where('user_id', $second_leader)->update(['user_money' => ['exp', 'user_money+'. 5],'distribut_money' => ['exp','distribut_money+'. 5]]);
+                $account_log['user_id'] = $second_leader;
+                $account_log['desc'] = "用户{$user_id}入单 复购市代奖励5元";
+                $account_log['user_money'] =$account_log['distribut_money'] = 5;
+                Db::name('accountLog')->data($account_log)->insert();
             }
             if ($third_leader > 0) {
-                Db::name('users')->where('user_id', $third_leader)->update(['user_money' => ['exp', 'user_money+' . 5]]);
+                Db::name('users')->where('user_id', $third_leader)->update(['user_money' => ['exp', 'user_money+'. 5],'distribut_money' => ['exp','distribut_money+'. 5]]);
+                $account_log['user_id'] = $third_leader;
+                $account_log['desc'] = "用户{$user_id}入单 复购省代奖励5元";
+                $account_log['user_money'] =$account_log['distribut_money'] = 5;
+                Db::name('accountLog')->data($account_log)->insert();
             }
         }
     }
@@ -1110,23 +1220,23 @@ function update_pay_status($order_sn,$ext=array())
         // 找出对应的订单
         $order = M('order')->master()->where("order_sn",$order_sn)->find();
         //预售订单
-        $orderGoodsArr = M('OrderGoods')->where(array('order_id'=>$order['order_id']))->find();
-        if ($order['order_prom_type'] == 4) {
+        $orderGoodsArr = M('OrderGoods')->where(array('order_id'=>$order['order_id']))->select();
+        if ($order['order_prom_type'] == 4) { //当前程序不会进入，没有预售产品
             // 预付款支付 有订金支付 修改支付状态  部分支付
-            if($order['total_amount'] != $order['order_amount'] && $order['pay_status'] == 0){
-                //支付订金
-                M('order')->where("order_sn", $order_sn)->save(array('order_sn'=> date('YmdHis').mt_rand(1000,9999) ,'pay_status' => 2, 'pay_time' => time(),'paid_money'=>$order['order_amount']));
-                M('goods_activity')->where(array('act_id'=>$order['order_prom_id']))->setInc('act_count',$orderGoodsArr['goods_num']);
-            }else{
-                //全额支付 无订金支付 支付尾款
-                M('order')->where("order_sn", $order_sn)->save(array('pay_status' => 1, 'pay_time' => time()));
-                $pre_sell = M('goods_activity')->where(array('act_id'=>$order['order_prom_id']))->find();
-                $ext_info = unserialize($pre_sell['ext_info']);
-                //全额支付 活动人数加一
-                if(empty($ext_info['deposit'])){
-                    M('goods_activity')->where(array('act_id'=>$order['order_prom_id']))->setInc('act_count',$orderGoodsArr['goods_num']);
-                }
-            }
+//            if($order['total_amount'] != $order['order_amount'] && $order['pay_status'] == 0){
+//                //支付订金
+//                M('order')->where("order_sn", $order_sn)->save(array('order_sn'=> date('YmdHis').mt_rand(1000,9999) ,'pay_status' => 2, 'pay_time' => time(),'paid_money'=>$order['order_amount']));
+//                M('goods_activity')->where(array('act_id'=>$order['order_prom_id']))->setInc('act_count',$orderGoodsArr['goods_num']);
+//            }else{
+//                //全额支付 无订金支付 支付尾款
+//                M('order')->where("order_sn", $order_sn)->save(array('pay_status' => 1, 'pay_time' => time()));
+//                $pre_sell = M('goods_activity')->where(array('act_id'=>$order['order_prom_id']))->find();
+//                $ext_info = unserialize($pre_sell['ext_info']);
+//                //全额支付 活动人数加一
+//                if(empty($ext_info['deposit'])){
+//                    M('goods_activity')->where(array('act_id'=>$order['order_prom_id']))->setInc('act_count',$orderGoodsArr['goods_num']);
+//                }
+//            }
         } else {
 
             // 修改支付状态  已支付
@@ -1138,9 +1248,12 @@ function update_pay_status($order_sn,$ext=array())
         minus_stock($order['order_id']);
         //先进行代理发奖励在更新会员等级。
         //根据商品名称 判定是否购买680入单会员商品
-        if( 0 == strcmp($orderGoodsArr['goods_name'],"入单商品")){
-            distribution_money_by_level($order['user_id']);
+        foreach ($orderGoodsArr as $key => $val){
+            if( 0 == strcmp($val['goods_name'],"入单商品")){
+                distribution_money_by_level($order['user_id'],$order['order_id']);
+            }
         }
+
 
 		
 //		$myuser = M('users')->where("user_id", $order['user_id'])->find();//李洪顺
@@ -1165,7 +1278,7 @@ function update_pay_status($order_sn,$ext=array())
             logOrder($order['order_id'],'订单付款成功','付款成功',$order['user_id']);
         }
         //分销设置
-        M('rebate_log')->where("order_id" ,$order['order_id'])->save(array('status'=>1));
+//        M('rebate_log')->where("order_id" ,$order['order_id'])->save(array('status'=>1));
         // 成为分销商条件
 //        $distribut_condition = tpCache('distribut.condition');
 //        if($distribut_condition == 1)  // 购买商品付款才可以成为分销商
@@ -1531,7 +1644,7 @@ function calculate_price($user_id = 0, $order_goods, $shipping_code = '', $shipp
     $order_amount = $goods_price + $shipping_price - $coupon_price; // 应付金额 = 商品价格 + 物流费 - 优惠券
 
     $user_money = ($user_money > $order_amount) ? $order_amount : $user_money;  // 余额支付原理等同于积分
-    $order_amount = $order_amount - $user_money; //  余额支付抵应付金额
+    $order_amount = (round($order_amount * 1000) - round($user_money * 1000))/1000; //  余额支付抵应付金额
 
     /*判断能否使用积分
      1..积分低于point_min_limit时,不可使用

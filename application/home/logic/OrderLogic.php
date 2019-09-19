@@ -129,13 +129,14 @@ class OrderLogic extends Model
 //            $cid = M('CouponList')->where("id", $coupon_id)->getField('cid');
 //            M('Coupon')->where("id", $cid)->setInc('use_num'); // 优惠券的使用数量加一
 //        }
-        // 3 扣除积分 扣除余额
-//        if($car_price['pointsFee']>0)
-//            M('Users')->where("user_id", $user_id)->setDec('pay_points',($car_price['pointsFee'] * tpCache('shopping.point_rate'))); // 消费积分
-        if($car_price['balance']>0){
-            M('Users')->where("user_id", $user_id)->setDec('user_money',$car_price['balance']); // 抵扣余额,
-            Db::name('Users')->where("user_id", $user_id)->setInc('pay_points',$goods['give_integral']);//修改积分：购买商品增加积分 默认不增加即增加0
+        // 3 扣除积分 扣除余额 增加购买商品赠送积分
+        if($car_price['pointsFee']>0){
+            Db::name('Users')->where("user_id", $user_id)->setDec('pay_points',($car_price['pointsFee'] * tpCache('shopping.point_rate'))); // 消费积分
         }
+        if($car_price['balance']>0){
+            Db::name('Users')->where("user_id", $user_id)->setDec('user_money',$car_price['balance']); // 抵扣余额
+        }
+
 
 
         // 4 删除已提交订单商品
@@ -144,6 +145,7 @@ class OrderLogic extends Model
         // 5 记录log 日志
         $data4['user_id'] = $user_id;
         $data4['user_money'] = -$car_price['balance'];
+
         $data4['pay_points'] = -($car_price['pointsFee'] * tpCache('shopping.point_rate'));
         $data4['change_time'] = time();
         $data4['desc'] = '购物消费';
@@ -151,6 +153,17 @@ class OrderLogic extends Model
         $data4['order_id'] = $order_id;
         // 如果使用了积分或者余额才记录
         ($data4['user_money'] || $data4['pay_points']) && M("AccountLog")->add($data4);
+
+        foreach($cartList as $key => $val){
+            $goods = Db::name('goods')->where("goods_id", $val['goods_id'])->cache(true,TPSHOP_CACHE_TIME)->find();
+            if($goods['give_integral']>0){
+                Db::name('Users')->where("user_id", $user_id)->setInc('pay_points',$goods['give_integral']);//修改积分：购买商品增加积分 默认不增加即增加0
+                $data4['pay_points'] = $goods['give_integral'];
+                $data4['desc'] = '购买'.$goods['goods_name'].'赠送积分';
+                $data4['jxmc'] = '购买商品赠送积分';
+                Db::name("accountLog")->add($data4);
+            }
+        }
 
         //分销开关全局
 //        $distribut_switch = tpCache('distribut.switch');
