@@ -226,80 +226,48 @@ class User extends Base {
 			$data['mobile_validated']  = 1;//手机已验证
 			
 			
-			$data['user_money'] = '0.00';//给本人加5元可用余额
+			$data['user_money'] = '0.00';//
 			
 			$usermobile = $data['usermobile'];//隐传值
 			
-			$tjr_shibai = 1;
-			
-			$tjr1_user_id = 0 ;
-			$tjr2_user_id = 0 ;
-			$tjr3_user_id = 0 ;
+			$first_leader = 0 ;
+			$second_leader = 0 ;
+			$third_leader = 0 ;
 			if ( strlen($data['first_leader']) > 3 ) {//如果有 推荐人手机号
-				$tjr1_users = M('users')->where("mobile", $data['first_leader'])->find();
-				if($tjr1_users){
-					$tjr1_user_id = (int)$tjr1_users['user_id'];
-					if ( (int)$tjr1_user_id == 0 ) {
-						$this->error('没有找到推荐人手机号,',U('User/index'));
-						$tjr_shibai = 2;
-					}
-					if ( (int)$tjr1_user_id > 0 ) {
-						$data['first_leader'] = $tjr1_user_id; 
-					} 
-				}
+				$first_user = M('users')->where("mobile", $data['first_leader'])->find();
+				if($first_user){
+					$first_leader = (int)$first_user['user_id'];
+                    $data['first_leader'] = $first_leader;
+
+                    $result = users_leader_all($first_leader);
+                    if($first_user['level']==3){
+                        //推荐人就是市代
+                        $second_leader = $first_leader;
+                        if(!empty($result['sd_leader_users'])){
+                            $third_leader = $result['sd_leader_users'][0];
+                        }
+                    }
+                    if($first_user['level']==4){
+                        //推荐人是省代 市代置空即second_leader=0
+                        $third_leader = $first_leader;
+                    }
+                }
 			} else {
-				//$tjr1_user_id = 1;
-				//$data['first_leader'] = 1;
-				$tjr1_user_id = 0;
+                $this->error('没有找到推荐人手机号,',U('User/index'));
+				$first_leader = 0;
 				$data['first_leader'] = 0;
-			}	
-			if ( (int)$tjr1_user_id > 0 ) {		
-				$tjr2_users = M('users')->where("user_id", $tjr1_user_id)->find();
-				if($tjr2_users){
-					
-					/*M('users')->where(array('user_id' => $tjr1_user_id))->setInc('frozen_money','0.00'); //给推荐人加销售佣金
-					$account_log = array(
-						'user_id'       => $tjr1_user_id,
-						'user_money'    => '0.00',
-						'pay_points'    => '0',
-						'change_time'   => time(),
-						'desc'   => '销售佣金（来自于）',
-						'distribut_money' => '0.00',
-						'order_id' => '0',
-						'order_sn' => '',
-						'address_id' => 0,
-						'total_amount' => '0',
-					);
-					M('account_log')->add($account_log);*/
-					
-					
-					$tjr2_user_id = (int)$tjr2_users['first_leader'];
-					if ( (int)$tjr2_user_id > 0 ) {
-						$tjr3_users = M('users')->where("user_id", $tjr2_user_id)->find();
-						if($tjr3_users){
-							$tjr3_user_id = (int)$tjr3_users['first_leader'];
-						}
-					}
-				}
-				
-				$data['second_leader'] = $tjr2_user_id; 
-				$data['third_leader'] = $tjr3_user_id; 
-				
-				M('users')->where(array('user_id' => $tjr1_user_id))->setInc('underling_number');
-				M('users')->where(array('user_id' => $tjr2_user_id))->setInc('underling_number');
-				M('users')->where(array('user_id' => $tjr3_user_id))->setInc('underling_number');
 			}
+
 			
 			    //$data['user_money'] = $data['my_user_money'];//充值余额
-				
-			if ( $tjr_shibai ==  2 ) {
+
+            if($first_user) {
 				$this->error('没有找到推荐人手机号',U('User/index'));	
 			} else {
 				$user_obj = new UsersLogic();
 				$res = $user_obj->addUser($data);
 				if($res['status'] == 1){
 					//if ( $data['level'] == 2 ) {
-						//$data['user_money'] = '10000.00';//增加股东会员的 余额 10000元
 						accountLog($res['user_id'], $data['my_user_money'], 0,"平台充值",0);  	
 					//}
 					if  ( strlen($usermobile) > 1  ) {

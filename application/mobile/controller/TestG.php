@@ -15,6 +15,12 @@ class Testg extends MobileBase
     public function update_up_leader($user_id){
         update_up_leader($user_id);
     }
+    public function reward_info($user_id){
+        dump(reward_info($user_id));
+    }
+    function user_agent_info($user_id){
+        echo user_agent_info($user_id,0);
+    }
     public function test(){
         $a=$b=5;
 //        echo $a.$b;

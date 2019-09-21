@@ -261,6 +261,7 @@ function distribution_money_by_level($user_id,$order_id){
             Db::name('users')->where('user_id', $first_leader)->update(['user_money' => ['exp', 'user_money+'. 100],'distribut_money' => ['exp','distribut_money+'. 100]]);
             $account_log['user_id'] = $first_leader;
             $account_log['desc'] = "用户{$user_id}入单 复购直推奖励100元";
+            $account_log['jxmc'] = '复购入单奖励';
             $account_log['user_money'] =$account_log['distribut_money'] = 100;
             Db::name('accountLog')->data($account_log)->insert();
 
@@ -269,6 +270,7 @@ function distribution_money_by_level($user_id,$order_id){
                 Db::name('users')->where('user_id', $first_user['first_leader'])->update(['user_money' => ['exp', 'user_money+'. 20],'distribut_money' => ['exp','distribut_money+'. 20]]);
                 $account_log['user_id'] = $first_user['first_leader'];
                 $account_log['desc'] = "用户{$user_id}入单 复购间接推荐奖励20元";
+                $account_log['jxmc'] = '复购入单奖励';
                 $account_log['user_money'] =$account_log['distribut_money'] = 20;
                 Db::name('accountLog')->data($account_log)->insert();
             }
@@ -276,6 +278,7 @@ function distribution_money_by_level($user_id,$order_id){
                 Db::name('users')->where('user_id', $second_leader)->update(['user_money' => ['exp', 'user_money+'. 5],'distribut_money' => ['exp','distribut_money+'. 5]]);
                 $account_log['user_id'] = $second_leader;
                 $account_log['desc'] = "用户{$user_id}入单 复购市代奖励5元";
+                $account_log['jxmc'] = '复购入单奖励';
                 $account_log['user_money'] =$account_log['distribut_money'] = 5;
                 Db::name('accountLog')->data($account_log)->insert();
             }
@@ -283,6 +286,7 @@ function distribution_money_by_level($user_id,$order_id){
                 Db::name('users')->where('user_id', $third_leader)->update(['user_money' => ['exp', 'user_money+'. 5],'distribut_money' => ['exp','distribut_money+'. 5]]);
                 $account_log['user_id'] = $third_leader;
                 $account_log['desc'] = "用户{$user_id}入单 复购省代奖励5元";
+                $account_log['jxmc'] = '复购入单奖励';
                 $account_log['user_money'] =$account_log['distribut_money'] = 5;
                 Db::name('accountLog')->data($account_log)->insert();
             }
@@ -390,7 +394,25 @@ function update_underling_leader($user_id,$root_user_id){
         }
     }
 }
-
+$user_underling_count = 0;
+function do_underling_count($user_id){
+    $underling_users = Db::name('users')->where('first_leader',$user_id)->select();
+    if(!empty($underling_users)){
+        global $user_underling_count;
+        $user_underling_count += count($underling_users);
+        foreach ($underling_users as $key => $val){
+            $cur_user_id = $val['user_id'];
+            do_underling_count($cur_user_id);
+        }
+    }
+}
+function underling_count($user_id){
+    do_underling_count($user_id);
+    global $user_underling_count;
+    $count = $user_underling_count;
+    $user_underling_count = 0;
+    return $count;
+}
 /**
  * 更新上级等级
  * @param $user_id该会员下的一个会员变成了入单会员
@@ -446,6 +468,76 @@ function update_up_leader($user_id){
     }
 }
 
+/**
+ * @param $user_id 用户ID
+ * @param $addNum 下级总数 增加或减少
+ * @return first_leader
+ * under_first_count
+ * under_second_count
+ * under_third_count
+ */
+function user_agent_info($root_user_id,$addNum){
+    $user = Db::name('users')->where('user_id',$root_user_id)->find();
+    $first_leader = $user['first_leader'];//直接推荐人
+    if(!$first_leader>0){//无推荐人，循环结束
+        return null;
+    }
+    //向上遍历，找到伞尖
+    $result['first_leader']=$first_leader;
+    $cur_user_id = $root_user_id;//当前用户ID
+    while($cur_user_id>0){
+        $cur_user = Db::name('users')->where('user_id',$cur_user_id)->find();
+        $first_user = Db::name('users')->where('user_id',$cur_user['first_leader'])->find();
+        $first_user_level = $first_user['level'];
+        //修改伞下人数
+        if($addNum>0){
+            Db::name('users')->where('user_id',$first_leader)->setInc('underling_number',$addNum)->update();
+        }else if($addNum<0){
+            Db::name('users')->where('user_id',$first_leader)->setDec('underling_number',abs($addNum))->update();
+        }
+        if($first_user_level==1||$first_user_level==2){
+            //上级是注册会员或入单会员 继续查找上级 不做操作
+        }else if($first_user_level==3){
+            //上级是市代 如果直接推荐人为市代，并且当前cur_user用户没有第二推荐人即最近的市代，则更新当前用户的市代
+            if($cur_user['second_leader']!=$cur_user['first_leader']||$cur_user['second_leader']==0){
+                Db::name('users')
+                    ->where('user_id',$cur_user_id)
+                    ->update(['second_leader'=>$cur_user['first_leader']]);
+            }
+
+        }else if($first_user_level==4){
+            //如果直接推荐人为省代，并且当前cur_user用户没有第三推荐人即最近的省代，则更新当前用户的省代
+            if($cur_user['third_leader']!=$cur_user['first_leader']||$cur_user['third_leader']==0){
+                Db::name('users')
+                    ->where('user_id',$cur_user_id)
+                    ->update(['third_leader'=>$cur_user['first_leader']]);
+            }
+        }
+        $cur_user_id = $cur_user['first_leader'];
+    }
+    if($addNum>0){
+        //暂时业务只有注册时才会addNum增加1 注册时不存在下级 故到此结束
+    }else{
+        $under_count = 0;//所有伞下会员数
+        //直辖人数 即下级的直接推荐人是当前会员
+        $under_first_count = Db::name('users')->where('first_leader',$root_user_id)->count();
+        $result['under_first_count'] = $under_first_count;
+        //最近市代人数 即当前用户为市代，以当前用户作为最近市代的用户
+        if($user['level']==3){
+            $under_second_count = Db::name('users')->where('second_leader',$root_user_id)->count();
+            $result['under_second_count'] = $under_second_count;
+        }
+        //最近市代人数
+        if($user['level']==4){
+            $under_third_count = Db::name('users')->where('third_leader',$root_user_id)->count();
+            $result['under_third_count'] = $under_third_count;
+        }
+        //获取所有直辖会员
+
+        $result['under_count'] = underling_count($root_user_id);
+    }
+    return $result;
+}
 /**
  *  商品缩略图 给于标签调用 拿出商品表的 original_img 原始图来裁切出来的
  * @param type $goods_id  商品id
@@ -1782,4 +1874,48 @@ function read_html_cache(){
             exit();
         }
     }
+}
+
+function reward_info($user_id){
+    $result=[];
+
+    $user = Db::name('users')->where('user_id',$user_id)->find();
+    //用户表获取 累计奖励金额distrust_money  直接推挤人即上级推荐人 first_leader 上级市代 second_leader 上级省代 third_leader
+    $result['user'] = $user;
+    $account_logs = Db::name('account_log')->where(['user_id'=>$user_id,'jxmc'=>'入单奖励'])->select();
+
+    $totay_reward_money = 0; //当天奖励金额
+    $beginToday=mktime(0,0,0,date('m'),date('d'),date('Y')); //当天开始时间戳
+    $endToday=mktime(0,0,0,date('m'),date('d')+1,date('Y'))-1;//当天结束时间戳
+    foreach ($account_logs as $key => $val){
+        if($val['change_time']>$beginToday&&$val['change_time']<$endToday){
+            $totay_reward_money += $val['distribut_money'];
+        }
+    }
+    $result['total_reward'] = $totay_reward_money;
+
+    return $result;
+}
+
+
+function save_rebate_info($user_id,$buy_user_id,$nickname,$order_sn,$order_id,$money = 0,$remark,$jxmc,$level,$buy_user_level){
+    $level_name = Db::name('user_level')->where('level_id',$level)->getField("level_name");
+    $buy_user_level_name = Db::name('user_level')->where('level_id',$buy_user_level)->getField("level_name");
+    $param = array([
+        'user_id' =>$user_id,
+        'buy_user_id' =>$buy_user_id,
+        'nickname' => $nickname,
+        'order_sn' => $order_sn,
+        'order_id' => $order_id,
+        'money' => $money,
+        'level' => $level,
+        'create_time' => time(),
+        'status' => '3',//已分成
+        'confirm_time' => time(), //分成时间，默认为当前等同于创建时间
+        'remark' => $remark,
+        'jxmc' => $jxmc,
+        'user_level_name' => $level_name,
+        'buy_user_level_name' => $buy_user_level_name
+    ]);
+    Db::name('rebate_log')->add($param);
 }

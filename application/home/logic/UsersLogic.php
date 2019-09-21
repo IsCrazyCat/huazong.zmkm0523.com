@@ -350,10 +350,7 @@ class UsersLogic extends Model
             $map['first_leader'] = $first_leader;
 			$map['second_leader'] = $second_leader;
 			$map['third_leader'] = $third_leader;
-            //他上线代理的代理人数要加1
-            Db::name('users')->where(array('user_id' => $map['first_leader']))->setInc('underling_number');
-            Db::name('users')->where(array('user_id' => $map['second_leader']))->setInc('underling_number');
-            Db::name('users')->where(array('user_id' => $map['third_leader']))->setInc('underling_number');
+
 			
         }else{
 			$map['first_leader'] = 0;
@@ -372,6 +369,8 @@ class UsersLogic extends Model
 		
         $user_id = M('users')->insertGetId($map);
         if($user_id === false) { return array('status'=>-1,'msg'=>'注册失败'); }
+        //他上线代理的代理人数要加1
+        user_agent_info($user_id,1);
            
         $pay_points = tpCache('basic.reg_integral'); // 会员注册赠送积分
         if($pay_points > 0){

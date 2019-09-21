@@ -10,7 +10,7 @@
                 <div class="fl lors" style="text-align: center;height:2.688rem;padding:0.8rem 0.3rem;margin:0;">
                   <div style="padding:0.1rem 0;">
                     <span style="float:left">{$user['nickname']}</span>
-                    <span style="float:left; font-size:0.6rem;padding:0.1rem 0;"  >〖<if condition="$user[level] eq 2">销售代表<elseif condition="$user[level] eq 3" />业务经理<elseif condition="$user[level] eq 4" />高级经理<else />注册会员</if>〗</span>
+                    <span style="float:left; font-size:0.6rem;padding:0.1rem 0;"  >〖<if condition="$user[level] eq 2">入单会员<elseif condition="$user[level] eq 3" />市级代理<elseif condition="$user[level] eq 4" />省级代理<else />注册会员</if>〗</span>
                     <if condition="$first_nickname neq ''">
                         <span style="float:left; font-size:0.6rem;padding:0.1rem 0;">由({$first_nickname})推荐</span>
                     </if>

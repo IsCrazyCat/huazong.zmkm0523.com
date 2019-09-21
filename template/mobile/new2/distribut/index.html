@@ -21,7 +21,7 @@
                     <img src="{$user[head_pic]|default="__STATIC__/images/user68.jpg"}"/>
                 </div>
 				<div class="my_name_in fl" style="width:10rem;height:auto;">
-					<p class="my_name" style="height:auto;"><span style="float:left; font-size:0.8rem;">ID:{$user['user_id']}</span><span style="float:left; font-size:0.8rem;"  >〖<if condition="$user[level] eq 2">销售代表<elseif condition="$user[level] eq 3" />业务经理<elseif condition="$user[level] eq 4" />高级经理<else />注册会员</if>〗</span></p>
+					<p class="my_name" style="height:auto;"><span style="float:left; font-size:0.8rem;">ID:{$user['user_id']}</span><span style="float:left; font-size:0.8rem;"  >〖<if condition="$user[level] eq 2">入单会员<elseif condition="$user[level] eq 3" />市级代理<elseif condition="$user[level] eq 4" />省级代理<else />注册会员</if>〗</span></p>
 					<p class="my_name" style="height:auto;"><span style="float:left; font-size:0.8rem;">{$user['nickname']}</span></p>
 
 					<p class="my_in">{$store.store_name}</p>
@@ -48,14 +48,13 @@
 						<span>{$user['user_money']|default="0.00"}</span>
 					</div>
 					<div class="detail_money_ri">
-						<p><span class="tit">今日收入(元)</span><span class="cont">{$money.today_money|default="0.00"}</span></p>
+						<p><span class="tit">今日收入(元)</span><span class="cont">￥{$money.today_money|default="0.00"}</span></p>
 						<p><span class="tit">总销售额(元)</span><span class="cont">￥{$sales_volume}</span></p>
 					</div>
 				</div>
 				<p class="all_comm">
-					<span class="tit">累计获得佣金(元)</span><span class="cont">￥{$money.achieve_money|default="0.00"}</span>
-					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-					<span class="tit">预得佣金(元)</span><span class="cont">￥{$money.prepare_money|default="0.00"}</span>
+					<span class="tit">累计获得佣金(元)</span><span class="cont">￥{$user['distribut_money']|default="0.00"}</span>
+<!--					<span class="tit">预得佣金(元)</span><span class="cont">￥{$money.prepare_money|default="0.00"}</span>-->
 				</p>
 
 			</div>
@@ -73,7 +72,7 @@
 					</a>
 				</li>-->
 				<li >
-					<a href="{:U('Distribut/lower_list_20181126')}"><!-- add by lishibo -->
+					<a href="{:U('Distribut/lower_list')}"><!-- add by lishibo -->
 						<i class="fx-f2"></i>
 						<span>我的团队</span>
 					</a>
@@ -84,12 +83,12 @@
 						<span>我的名片</span>
 					</a>
 				</li>
-				<li >
-					<a href="{:U('Distribut/myrankings',array('order'=>'underling_number'))}">
-						<i class="fx-f4"></i>
-						<span>分销排行</span>
-					</a>
-				</li>
+<!--				<li >-->
+<!--					<a href="{:U('Distribut/myrankings',array('order'=>'underling_number'))}">-->
+<!--						<i class="fx-f4"></i>-->
+<!--						<span>分销排行</span>-->
+<!--					</a>-->
+<!--				</li>-->
 				
 			</ul>
 		</div>
@@ -112,7 +111,7 @@
 				</li>-->
 				<li >
 					<!--更改佣金明细查询 lishibo 2018/12/11 -->
-					<a href="{:U('Distribut/rebate_log_20181211')}">
+					<a href="{:U('Distribut/rebate_log')}">
 						<i class="fx-f7"></i>
 						<span>佣金明细</span>
 					</a>

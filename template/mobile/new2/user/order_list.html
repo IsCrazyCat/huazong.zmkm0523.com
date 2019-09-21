@@ -4,7 +4,7 @@
     <div class="maleri30">
         <ul class="">
             <li <if condition="$Request.param.type eq ''">class="red"</if>>
-                <a href="{:U('/Mobile/User/order_list')}" class="tab_head">全部订单1</a>
+                <a href="{:U('/Mobile/User/order_list')}" class="tab_head">全部订单</a>
             </li>
             <li id="WAITPAY" <if condition="$Request.param.type eq 'WAITPAY'">class="red"</if>">
                 <a href="{:U('/Mobile/User/order_list',array('type'=>'WAITPAY'))}" class="tab_head" >待付款</a>

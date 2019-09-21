@@ -45,16 +45,16 @@
 		<div class="sDiv2">	 
 			<input type="text" size="30" id="end_time" placeholder="生成日志结束时间" value="{$end_time}" name="end_time" class="qsbox">
 		</div>
-		<div class="sDiv2">	 
-			<select class="select" id="status" name="status">                       
-                    <option value="">全部</option>                    
-                    <option value="0"<if condition="$_REQUEST['status'] heq '0'">selected</if>>未付款</option>
-                    <option value="1"<if condition="$_REQUEST['status'] eq 1">selected</if>>已付款</option>
-                    <option value="2"<if condition="$_REQUEST['status'] eq 2">selected</if>>等待分成</option>
-                    <option value="3"<if condition="$_REQUEST['status'] eq 3">selected</if>>已分成</option>
-                    <option value="4"<if condition="$_REQUEST['status'] eq 4">selected</if>>已取消</option>
-                  </select>
-		</div>
+<!--		<div class="sDiv2">	 -->
+<!--			<select class="select" id="status" name="status">                       -->
+<!--                    <option value="">全部</option>                    -->
+<!--                    <option value="0"<if condition="$_REQUEST['status'] heq '0'">selected</if>>未付款</option>-->
+<!--                    <option value="1"<if condition="$_REQUEST['status'] eq 1">selected</if>>已付款</option>-->
+<!--                    <option value="2"<if condition="$_REQUEST['status'] eq 2">selected</if>>等待分成</option>-->
+<!--                    <option value="3"<if condition="$_REQUEST['status'] eq 3">selected</if>>已分成</option>-->
+<!--                    <option value="4"<if condition="$_REQUEST['status'] eq 4">selected</if>>已取消</option>-->
+<!--                  </select>-->
+<!--		</div>-->
         <div class="sDiv2">	 
           <input type="submit" class="btn" value="搜索">
         </div>
@@ -72,23 +72,24 @@
 	              <th align="left" abbr="order_sn" axis="col3" class="">
 	                <div style="text-align: center; width: 50px;" class="">ID</div>
 	              </th>
+				  <th align="left" abbr="consignee" axis="col4" class="">
+					<div style="text-align: center; width: 180px;" class="">获奖励用户</div>
+				  </th>
 	              <th align="left" abbr="consignee" axis="col4" class="">
 	                <div style="text-align: center; width: 180px;" class="">下单会员</div>
 	              </th>
-	              <th align="left" abbr="consignee" axis="col4" class="">
-	                <div style="text-align: center; width: 180px;" class="">获佣用户</div>
-	              </th>
+
 	              <th align="center" abbr="article_show" axis="col5" class="">
 	                <div style="text-align: center; width: 180px;" class="">订单编号</div>
 	              </th>
 	              <th align="center" abbr="article_show" axis="col5" class="">
-	                <div style="text-align: center; width: 100px;" class="">所获佣金</div>
+	                <div style="text-align: center; width: 100px;" class="">所获奖励</div>
 	              </th>
 	              <th align="center" abbr="article_show" axis="col5" class="">
 	                <div style="text-align: center; width: 100px;" class="">消费金额</div>
 	              </th>
 	              <th align="center" abbr="article_time" axis="col6" class="">
-	                <div style="text-align: center; width: 100px;" class="">位于层级</div>
+	                <div style="text-align: center; width: 100px;" class="">会员等级</div>
 	              </th>
                   <th align="center" abbr="article_time" axis="col6" class="">
 	                <div style="text-align: center; width: 120px;" class="">奖项名称</div>
@@ -124,7 +125,7 @@
 		                <div style="width: 24px;"><i class="ico-check"></i></div>
 		              </td>
 		              <td align="left" abbr="order_sn" axis="col3" class="">
-		                <div style="text-align: center; width: 50px;" class="">{$v.id}</div>
+		                <div style="text-align: center; width: 50px;" class="">{$v.log_id}</div>
 		              </td>
 		              <td align="left" abbr="consignee" axis="col4" class="">
 		                <div style="text-align: center; width: 180px;" class="">
@@ -134,8 +135,8 @@
                                   <elseif condition="$user_arr[$v[buy_user_id]][email] neq ''"/>
                                        {$user_arr[$v[buy_user_id]][email]}
                                   <else />{$user_arr[$v[buy_user_id]][mobile]}</if>
-                                  &nbsp;{$v.buy_user_level_name}
-                                  <!--（<if condition="$user_arr[$v[buy_user_id]][level] eq '1'">注册会员</if><if condition="$user_arr[$v[buy_user_id]][level] eq '2'">销售代表</if><if condition="$user_arr[$v[buy_user_id]][level] eq '3'">业务经理</if><if condition="$user_arr[$v[buy_user_id]][level] eq '4'">高级业务经理</if>）-->
+<!--                                  &nbsp;{$v.buy_user_level_name}-->
+                                  <!--（<if condition="$user_arr[$v[buy_user_id]][level] eq '1'">注册会员</if><if condition="$user_arr[$v[buy_user_id]][level] eq '2'">入单会员</if><if condition="$user_arr[$v[buy_user_id]][level] eq '3'">市级代理</if><if condition="$user_arr[$v[buy_user_id]][level] eq '4'">省级代理</if>）-->
                                   
 							</a>
 						</div>
@@ -149,7 +150,7 @@
                                        {$user_arr[$v[user_id]][email]}
                                   <else />{$user_arr[$v[user_id]][mobile]}</if>
                                   &nbsp;{$v.user_level_name}
-                                  <!--（<if condition="$user_arr[$v[user_id]][level] eq '1'">注册会员</if><if condition="$user_arr[$v[user_id]][level] eq '2'">销售代表</if><if condition="$user_arr[$v[user_id]][level] eq '3'">业务经理</if><if condition="$user_arr[$v[user_id]][level] eq '4'">高级业务经理</if>）-->
+                                  <!--（<if condition="$user_arr[$v[user_id]][level] eq '1'">注册会员</if><if condition="$user_arr[$v[user_id]][level] eq '2'">入单会员</if><if condition="$user_arr[$v[user_id]][level] eq '3'">市级代理</if><if condition="$user_arr[$v[user_id]][level] eq '4'">省级代理</if>）-->
                                   
                                   
 							</a>
@@ -163,17 +164,17 @@
                           </div>
 		              </td>
 		              <td align="center" abbr="article_time" axis="col6" class="">
-		                <div style="text-align: center; width: 100px;" class="">{$v.money}</div>
+		                <div style="text-align: center; width: 100px;" class="">{$v.user_money}</div>
 		              </td>
 		              <td align="center"  axis="col6" class="">
 		                <div style="text-align: center; width: 100px;" class="">{$v.goods_price}</div>
 		              </td>
 		             <td align="center" abbr="article_time" axis="col6" class="">
 		                <div style="text-align: center; width: 100px;" class="">
-			                <if condition="$v[level] eq 1">一级
-							<elseif condition="$v[level] eq 2"/>二级
-							<elseif condition="$v[level] eq 3"/>三级
-                            <elseif condition="$v[level] eq 0"/>本级
+			                <if condition="$user_arr[$v[buy_user_id]][level] eq 1">注册会员
+							<elseif condition="$user_arr[$v[buy_user_id]][level] eq 2"/>入单会员
+							<elseif condition="$user_arr[$v[buy_user_id]][level] eq 3"/>市级代理
+                            <elseif condition="$user_arr[$v[buy_user_id]][level] eq 4"/>省级代理
 							</if>
 		                </div>
 		              </td>
@@ -185,11 +186,12 @@
 		              </td>
 		              <td align="center"  class="">
 		                <div style="text-align: center; width: 90px;" class="">
-		                	<if condition="$v[status] eq 0">未付款</if>
-                            <if condition="$v[status] eq 1">已付款</if>
-                            <if condition="$v[status] eq 2">等待分成</if>
-                            <if condition="$v[status] eq 3">已分成</if>
-                            <if condition="$v[status] eq 4">已取消</if>  
+							已分成
+<!--		                	<if condition="$v[status] eq 0">未付款</if>-->
+<!--                            <if condition="$v[status] eq 1">已付款</if>-->
+<!--                            <if condition="$v[status] eq 2">等待分成</if>-->
+<!--                            <if condition="$v[status] eq 3">已分成</if>-->
+<!--                            <if condition="$v[status] eq 4">已取消</if>  -->
 						</div>
 		              </td>
 		              <td style="width:100%" axis="col7">

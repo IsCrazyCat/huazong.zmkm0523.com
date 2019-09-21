@@ -1,15 +1,31 @@
 <foreach name="lists" item="v">
-    <div class="my_team_alon p">
-        <a href="">
-            <div class="team_head">
-                <img src="{$v[head_pic]|default="__STATIC__/images/hi.jpg"}"/>
-            </div>
-            <div class="team_name_time">
-                <span class="t_n">{$v[nickname]}</span>
-                <span class="t_t">加入时间：{:date('Y-m-d',$v[reg_time])}</span>
-            </div>
-            <span class="team_price">{$v[distribut_money]}元</span>
-            <i class="icon-arrow_r">{$v[level]}</i>
-        </a>
+    <div class="my_team_alon p" <if condition="$v[second_leader] eq 2" />style="padding-left:3rem;"</if> >
+    <a href="javascript:void(0)"
+    <if condition="$v[yjnum] GT 0"> onclick="getTargetLowerList({$v[user_id]},'{$v[nickname]}')"</if> >
+
+    <div class="team_head">
+        <img src="{$v[head_pic]|default="__STATIC__/images/hi.jpg"}"/>
+    </div>
+    <div class="team_name_time">
+
+        <!-- edit by libo  -->
+        <span class="t_t" >{$v[nickname]}</span>
+        <span class="t_t" >ID: &nbsp;{$v[user_id]}</span>
+        <span class="t_t" >
+                直辖人数：{$v[yjnum]}人
+              </span>
+
+        <span class="t_t" >当前等级：〖<if condition="$v[level] eq 2">入单会员<elseif condition="$v[level] eq 3" />市级代理<elseif condition="$v[level] eq 4" />省级代理<else />注册会员</if>〗</span>
+        <span class="t_t">消费总额：{$v[total_amount]}元</span>
+        <span class="t_t">累计佣金：{$v[distribut_money]}元</span>
+        <span class="t_t">加入时间：{:date('Y-m-d',$v[reg_time])}</span>
+    </div>
+
+    <!-- ADD BY LISHIBO 2018/11/26 -->
+    <if condition="$v[yjnum] GT 0">
+        <i class="icon-arrow_r" onclick="getTargetLowerList({$v[user_id]},{$v[nickname]})"></i>
+    </if>
+
+    </a>
     </div>
 </foreach>

@@ -61,7 +61,7 @@ class Distribut extends Base {
     		$user_list[$k]['fisrt_leader'] = M('users')->where(array('first_leader'=>$val['user_id']))->count();
     		$user_list[$k]['second_leader'] = M('users')->where(array('second_leader'=>$val['user_id']))->count();
     		$user_list[$k]['third_leader'] = M('users')->where(array('third_leader'=>$val['user_id']))->count();
-    		$user_list[$k]['lower_sum'] = $user_list[$k]['fisrt_leader'] +$user_list[$k]['second_leader'] + $user_list[$k]['third_leader'];
+    		$user_list[$k]['lower_sum'] = underling_count($val['user_id']);
     	}
     	$this->assign('page',$show);
     	$this->assign('pager',$Page);
@@ -116,50 +116,55 @@ class Distribut extends Base {
     	$this->assign('page',$show);
     	return $this->fetch();
     }
- 
 
-    
     /**
      * 分成记录
      */
     public function rebate_log()
-    { 
-        $model = M("rebate_log"); 
-        $status = I('status');
+    {
+        $model = M("account_log");
+//        $status = I('status');
         $user_id = I('user_id/d');
-        $order_sn = I('order_sn');        
+        $order_sn = I('order_sn');
         $create_time = I('create_time');
         $create_time = $create_time  ? $create_time  : date('Y-m-d',strtotime('-1 year')).' - '.date('Y-m-d',strtotime('+1 day'));
-                       
+
         $create_time2 = explode(' - ',$create_time);
-        $where = " create_time >= '".strtotime($create_time2[0])."' and create_time <= '".strtotime($create_time2[1])."' ";
-        
-        if($status === '0' || $status > 0)
-            $where .= " and status = $status ";        
+        $where = " change_time >= '".strtotime($create_time2[0])."' and change_time <= '".strtotime($create_time2[1])."' ";
+
+//        if($status === '0' || $status > 0)
+//            $where .= " and status = $status ";
         $user_id && $where .= " and user_id = $user_id ";
         $order_sn && $where .= " and order_sn like '%{$order_sn}%' ";
-        
-		$where .= " and is_show = 1 ";
-		                
+        $where .= " and (`jxmc` = '入单奖励' OR `jxmc` = '复购入单奖励')";
+
+//		$where .= " and is_show = 1 ";
+
         $count = $model->where($where)->count();
-        $Page  = new Page($count,16);        
-        $list = $model->where($where)->order("id desc")->limit($Page->firstRow.','.$Page->listRows)->select();
+        $Page  = new Page($count,16);
+        $list = $model->where($where)->order("log_id desc")->limit($Page->firstRow.','.$Page->listRows)->select();
         if(!empty($list)){
-        	$get_user_id = get_arr_column($list, 'user_id'); // 获佣用户
-        	$buy_user_id = get_arr_column($list, 'buy_user_id'); //购买用户
-        	$level = get_arr_column($list, 'level'); //购买用户
-        	$user_id_arr = array_merge($get_user_id,$buy_user_id,$level);
-        	$user_arr = M('users')->where("user_id in (".  implode(',', $user_id_arr).")")->getField('user_id,mobile,nickname,email,level');
-        	$this->assign('user_arr',$user_arr);
+            $get_user_id = get_arr_column($list, 'user_id'); // 获奖励用户
+            $buy_user_id = [];
+            foreach ($list as $key => $val){
+                //获得购买用户
+                $order = Db::name('order')->where('order_sn',$val['order_sn'])->find();
+                $list[$key]['buy_user_id'] = $order['user_id'];
+                $list[$key]['goods_price'] = $order['goods_price'];
+            }
+            $buy_user_id = get_arr_column($list, 'buy_user_id'); //购买用户
+            $level = get_arr_column($list, 'level'); //购买用户等级
+            $user_id_arr = array_merge($get_user_id,$buy_user_id);
+            $user_arr = M('users')->where("user_id in (".  implode(',', $user_id_arr).")")->getField('user_id,mobile,nickname,email,level');
+            $this->assign('user_arr',$user_arr);
         }
-        $this->assign('create_time',$create_time);        
-        $show  = $Page->show();                 
+        $this->assign('create_time',$create_time);
+        $show  = $Page->show();
         $this->assign('show',$show);
         $this->assign('list',$list);
         C('TOKEN_ON',false);
         return $this->fetch();
     }
-    
     /**
      * 获取某个人下级元素
      */    

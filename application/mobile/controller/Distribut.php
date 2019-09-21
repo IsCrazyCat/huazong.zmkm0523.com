@@ -41,24 +41,24 @@ class Distribut extends MobileBase {
         	header("location:".U('Mobile/User/login'));
         	exit;
         }
-        if($user['is_distribut'] == 1){ //是分销商才查找用户店铺信息
-            $user_store = Db::name('user_store')->where("user_id", $this->user_id)->find();
-            $this->userStore=$user_store;
-            $this->assign('store',$user_store);
-        }
+//        if($user['is_distribut'] == 1){ //是分销商才查找用户店铺信息
+//            $user_store = Db::name('user_store')->where("user_id", $this->user_id)->find();
+//            $this->userStore=$user_store;
+//            $this->assign('store',$user_store);
+//        }
 
         $order_count = Db::name('order')->where("user_id", $this->user_id)->count(); // 我的订单数
         $goods_collect_count = Db::name('goods_collect')->where("user_id", $this->user_id)->count(); // 我的商品收藏
         $comment_count = Db::name('comment')->where("user_id", $this->user_id)->count();//  我的评论数
-        $coupon_count = Db::name('coupon_list')->where("uid", $this->user_id)->count(); // 我的优惠券数量
-        $first_nickname = Db::name('users')->where("user_id", $this->user['first_leader'])->getField('nickname');
+//        $coupon_count = Db::name('coupon_list')->where("uid", $this->user_id)->count(); // 我的优惠券数量
+        $first_nickname = Db::name('users')->where("user_id", $this->user['first_leader'])->getField('nickname');//推荐人昵称
         $level_name = Db::name('user_level')->where("level_id", $this->user['level'])->getField('level_name'); // 等级名称
         $this->assign('level_name',$level_name);        
         $this->assign('first_nickname',$first_nickname);        
         $this->assign('order_count',$order_count);
         $this->assign('goods_collect_count',$goods_collect_count);
         $this->assign('comment_count',$comment_count);
-        $this->assign('coupon_count',$coupon_count);
+//        $this->assign('coupon_count',$coupon_count);
 
     }
   
@@ -66,39 +66,27 @@ class Distribut extends MobileBase {
      * 分销用户中心首页（分销中心）
      */
     public function index(){
-        // 销售额 和 我的奖励
-        $result = DB::query("select sum(goods_price) as goods_price, sum(money) as money from __PREFIX__rebate_log where user_id = {$this->user_id}");
-        $result = $result[0];
-        $result['goods_price'] = $result['goods_price'] ? $result['goods_price'] : 0;
-        $result['money'] = $result['money'] ? $result['money'] : 0;        
-                
-         $lower_count[1] = Db::name('users')->where("first_leader", $this->user_id)->count();
-         $lower_count[2] = Db::name('users')->where("second_leader", $this->user_id)->count();
-         $lower_count[3] = Db::name('users')->where("third_leader", $this->user_id)->count();
+        $user = Db::name('users')->where('user_id',$this->user_id)->find();
+        $reward = reward_info($user['user_id']);
+        $lower_count[1] = Db::name('users')->where("first_leader", $this->user_id)->count();
+        $lower_count[2] = Db::name('users')->where("second_leader", $this->user_id)->count();
+        $lower_count[3] = Db::name('users')->where("third_leader", $this->user_id)->count();
 
-
-        $result2 = DB::query("select status,count(1) as c , sum(goods_price) as goods_price from `__PREFIX__rebate_log` where user_id = :user_id group by status",['user_id'=>$this->user_id]);
-        $level_order = convert_arr_key($result2, 'status');
-        for($i = 0; $i <= 5; $i++)
-        {
-            $level_order[$i]['c'] = $level_order[$i]['c'] ? $level_order[$i]['c'] : 0;
-            $level_order[$i]['goods_price'] = $level_order[$i]['goods_price'] ? $level_order[$i]['goods_price'] : 0;
-        }
+        $total_goods_price = Db::name('order')
+            ->where([
+                'user_id'=>$user['user_id'],
+                'pay_status'=> 1
+            ])->sum('goods_price');
 
         $money['withdrawals_money'] = Db::name('withdrawals')->where(['user_id'=>$this->user_id,'status'=>1])->sum('money'); // 已提现财富
         $money['achieve_money'] = Db::name('rebate_log')->where(['user_id'=>$this->user_id,'status'=>3])->sum('money');  //累计获得佣金
-		
-//		$vv['distribut_money'] = $money['achieve_money'];
-//		M("users")->where("user_id", $this->user_id)->save($vv);	
 
-		
-        $time=strtotime(date("Y-m-d"));
-        $money['today_money'] = Db::name('rebate_log')->where("user_id=$this->user_id and status in(2,3) and create_time>$time")->sum('money');    //今日收入
+        $money['today_money'] = $reward['total_reward'];    //今日收入
 
-        $this->assign('level_order',$level_order); // 代理订单        
+//        $this->assign('level_order',$level_order); // 代理订单
         $this->assign('lower_count',$lower_count); // 代理人数        
-        $this->assign('sales_volume',$result['goods_price']); // 销售额
-        $this->assign('reward',$result['money']);// 奖励
+        $this->assign('sales_volume',$total_goods_price ? $total_goods_price : 0); // 销售额
+        $this->assign('reward',$user['distribut_money']);// 奖励
         $this->assign('money',$money);
         return $this->fetch();
     }
@@ -107,19 +95,19 @@ class Distribut extends MobileBase {
      * 代理列表(我的团队)
      */
     public function lower_list(){
-		
+
+
         $user = $this->user;
         if($user['is_distribut'] != 1)
             $this->error('您还不是分销商');
-        $level = I('get.level',1);       
+
         $q = I('post.q','','trim');
-        $condition = array(1=>'first_leader',2=>'second_leader',3=>'third_leader');
-  
-        $mycount = Db::name('users')->where(" first_leader = '". $user['first_leader'] ."' ")->count();	
-       
-       //$where = "{$condition[$level]} = {$this->user_id}";
-       $where = "( first_leader = {$this->user_id} or second_leader = {$this->user_id}  ) ";
-       $bind = array();
+
+        //即 当前会员的直接下级人数，即下级的直接推荐人是当前会员 即first_leader是当前的user_id
+        $mycount = Db::name('users')->where(" first_leader = {$this->user_id} ")->count();
+
+        $where = "( first_leader = {$this->user_id} )";
+        $bind = array();
         if($q){
             $where .= " and (nickname like :q1 or user_id = :q2 or mobile = :q3)";
             $bind['q1'] = "%$q%";
@@ -129,92 +117,39 @@ class Distribut extends MobileBase {
 
         $count = Db::name('users')->where($where)->bind($bind)->count();
         $page = new Page($count,C('PAGESIZE'));
+
         $lists = Db::name('users')
             ->field('nickname,user_id,distribut_money,reg_time,head_pic,level,first_leader,second_leader,total_amount')
             ->where($where)->bind($bind)
             ->limit("{$page->firstRow},{$page->listRows}")
             ->order('user_id asc')
             ->select();
-			
+
         foreach($lists as $key => $value){
-          //$key = 键,$value = 值，$key和$value会被循环赋值
-          $lists[$key]['yjnum'] = Db::name('users')->where(" first_leader = '". $value['user_id'] ."' ")->count();			
-        }	
-			
-        $this->assign('dqyh', $this->user_id);
+            //获取当前会员直接下级的 直接下级数
+            $lists[$key]['yjnum'] = Db::name('users')->where(" first_leader = '". $value['user_id'] ."' ")->count();
+        }
+
+        $this->assign('dqyh', $this->user_id);// 用户id
         $this->assign('count', $count);// 总人数
         $this->assign('page', $page->show());// 赋值分页输出
         $this->assign('lists',$lists); // 代理
-		    $this->assign('mycount', $mycount);
-		
+
+        $this->assign('mycount', $mycount);
+
         if(I('is_ajax'))
         {
             return $this->fetch('ajax_lower_list');
-        }                
+        }
         return $this->fetch();
     }
-
-    
-
-    /**
-     * 代理列表(我的团队)
-     * @autho lishibo
-     * 2018/11/26
-     */
-    public function lower_list_20181126(){
-		
-      $user = $this->user;
-      if($user['is_distribut'] != 1)
-          $this->error('您还不是分销商');
-      $level = I('get.level',1);       
-      $q = I('post.q','','trim');
-      $condition = array(1=>'first_leader',2=>'second_leader',3=>'third_leader');
-
-      //add by lishibo 2018/11/26
-      $mycount = Db::name('users')->where(" first_leader = {$this->user_id} ")->count();			
-
-     $where = "( first_leader = {$this->user_id} )";
-     $bind = array();
-      if($q){
-          $where .= " and (nickname like :q1 or user_id = :q2 or mobile = :q3)";
-          $bind['q1'] = "%$q%";
-          $bind['q2'] = $q;
-          $bind['q3'] = $q;
-      }
-
-      $count = Db::name('users')->where($where)->bind($bind)->count();
-      $page = new Page($count,C('PAGESIZE'));
-      $lists = Db::name('users')
-          ->field('nickname,user_id,distribut_money,reg_time,head_pic,level,first_leader,second_leader,total_amount')
-          ->where($where)->bind($bind)
-          ->limit("{$page->firstRow},{$page->listRows}")
-          ->order('user_id asc')
-          ->select();
-    
-    foreach($lists as $key => $value){
-      $lists[$key]['yjnum'] = Db::name('users')->where(" first_leader = '". $value['user_id'] ."' ")->count();			
-    }	
-
-      $this->assign('dqyh', $this->user_id);// 用户id
-      $this->assign('count', $count);// 总人数
-      $this->assign('page', $page->show());// 赋值分页输出
-      $this->assign('lists',$lists); // 代理
-  
-      $this->assign('mycount', $mycount);
-  
-      if(I('is_ajax'))
-      {
-          return $this->fetch('ajax_lower_list_20181126');//add by lishibo
-      }                
-      return $this->fetch();
-  }
 
    /**
      * 获取我的团队成员下的子分级
      * @autho lishibo
      * 2018/11/26
      */
-    public function getTargetLowerList_20181126(){
+    public function getTargetLowerList(){
       
       //目标用户id
       $targetID = I('targetID');
@@ -246,7 +181,7 @@ class Distribut extends MobileBase {
 
       if(I('is_ajax'))
       {
-          return $this->fetch('ajax_lower_list_20181127');//add by lishibo
+          return $this->fetch('ajax_lower_list');//add by lishibo
       }     
       return $this->fetch();
   }
@@ -546,28 +481,36 @@ class Distribut extends MobileBase {
      * @time2017-4-6
      */
     public function rebate_log(){
+        //修改 这里数据获取从tp_account_log表 方法名暂时不做改动了
         $user =$this->user;
         if($user['is_distribut'] != 1)
             $this->error('您还不是分销商');
         $status = I('status',''); //日志状态
         $sort_asc = I('sort_asc','desc');  //排序
-        $sort  = I('sort','create_time'); //排序条件
-        $where['user_id'] = $this->user_id;
+        $sort  = I('sort','change_time'); //排序条件
+        $where = "`user_id` = $this->user_id and (`jxmc` = '入单奖励' OR `jxmc` = '复购入单奖励' )";
         if($status!=''){
-            $where['status']= $status ;
+            $where .= "and 'status' = $status";
+            //条件筛选时传递参数
+            $this->assign('status',$status);
         }
-        $count = Db::name('rebate_log')->where($where)->count(); //统计符合条件的数量
+        $count = Db::name('account_log')->where($where)->count(); //统计符合条件的数量
         $Page = new Page($count,C('PAGESIZE'));
-        $lists = Db::name('rebate_log')
+        $lists = Db::name('account_log')
             ->where($where)->order("$sort  $sort_asc")
             ->limit($Page->firstRow.','.$Page->listRows)
             ->cache(true)
             ->select(); //查询日志
-
+        foreach($lists as $key =>$val ){
+            //订单总金额
+            $lists[$key]['order'] = Db::name('order')->where('order_id',$val['order_id'])->field('goods_price')->find();
+            //购买人昵称
+            $lists[$key]['user'] = Db::name('users')->where('user_id',$val['user_id'])->field('nickname')->find();
+        }
         $this->assign('lists',$lists);
-        $page1 = new Page($count);
-    	   $this->assign('page',$page1->show());
-        $this->assign('page',$page);
+
+        $this->assign('page',$Page->show());
+        $this->assign('page',$Page);
 
         if(I('is_ajax')){
             return $this->fetch('ajax_rebate_log');

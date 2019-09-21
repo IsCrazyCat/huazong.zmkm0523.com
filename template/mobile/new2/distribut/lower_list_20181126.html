@@ -15,23 +15,22 @@
                     <img src="{$user[head_pic]|default="__STATIC__/images/user68.jpg"}"/>
                 </div>
 				<div class="my_name_in fl" style="width:10rem;height:auto;">
-                    <p class="my_name" style="height:auto;"><span style="float:left; font-size:0.8rem;">ID:{$user['user_id']}</span><span style="float:left; font-size:0.8rem;"  >〖<if condition="$user[level] eq 2">销售代表<elseif condition="$user[level] eq 3" />业务经理<elseif condition="$user[level] eq 4" />高级经理<else />注册会员</if>〗</span></p>
+                    <p class="my_name" style="height:auto;"><span style="float:left; font-size:0.8rem;">ID:{$user['user_id']}</span><span style="float:left; font-size:0.8rem;"  >〖<if condition="$user[level] eq 2">入单会员<elseif condition="$user[level] eq 3" />市级代理<elseif condition="$user[level] eq 4" />省级代理<else />注册会员</if>〗</span></p>
                     <p class="my_name" style="height:auto;"><span style="float:left; font-size:0.8rem;">{$user['nickname']}</span></p>
 
-					<p class="my_in">{$store.store_name}</p>
 				</div>
 			</div>
 			<!--<div class="my_share">
                 <a href="{:U('Distribut/set_store')}"><i class="icon-setting"></i></a>
             </div>-->
-      <p class="open_time">一级：{$mycount}个</p>
+      <p class="open_time">直辖：{$mycount}个</p>
   </div>
   
 
 <if condition="!empty($lists)">
     <div id="ajax_return">
         <foreach name="lists" item="v">
-            <div class="my_team_alon p" <if condition="$v[second_leader] eq 2" />style="padding-left:3rem;"</if> >
+            <div class="my_team_alon p" <if condition="$v[second_leader] eq 2">style="padding-left:3rem;"</if> >
                 <a href="javascript:void(0)"
                 <if condition="$v[yjnum] GT 0"> onclick="getTargetLowerList({$v[user_id]},'{$v[nickname]}')"</if> >
 
@@ -44,11 +43,10 @@
                        <span class="t_t" >{$v[nickname]}</span>
                         <span class="t_t" >ID: &nbsp;{$v[user_id]}</span>
                         <span class="t_t" >
-                          〖<if condition="$v[first_leader] eq $dqyh">一级
-                            <elseif condition="$v[second_leader] eq $dqyh" />二级<else />三级</if>&nbsp;代理人数：{$v[yjnum]}〗
+                          直辖人数：{$v[yjnum]}人
                         </span>
 
-                        <span class="t_t" >〖<if condition="$v[level] eq 2">销售代表<elseif condition="$v[level] eq 3" />业务经理<elseif condition="$v[level] eq 4" />高级经理<else />注册会员</if>〗</span> 
+                        <span class="t_t" >当前级别：〖<if condition="$v[level] eq 2">入单会员<elseif condition="$v[level] eq 3" />市级代理<elseif condition="$v[level] eq 4" />省级代理<else />注册会员</if>〗</span>
                         <span class="t_t">消费总额：{$v[total_amount]}元</span>
                         <span class="t_t">累计佣金：{$v[distribut_money]}元</span>
                         <span class="t_t">加入时间：{:date('Y-m-d',$v[reg_time])}</span>

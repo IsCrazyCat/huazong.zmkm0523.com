@@ -12,11 +12,10 @@
              <span class="t_t" >{$v[nickname]}</span>
               <span class="t_t" >ID: &nbsp;{$v[user_id]}</span>
               <span class="t_t" >
-                〖<if condition="$v[first_leader] eq $dqyh">一级
-                  <elseif condition="$v[second_leader] eq $dqyh" />二级<else />三级</if>&nbsp;代理人数：{$v[yjnum]}〗
+                直辖人数：{$v[yjnum]}人
               </span>
 
-              <span class="t_t" >〖<if condition="$v[level] eq 2">销售代表<elseif condition="$v[level] eq 3" />业务经理<elseif condition="$v[level] eq 4" />高级经理<else />注册会员</if>〗</span> 
+              <span class="t_t" >〖<if condition="$v[level] eq 2">入单会员<elseif condition="$v[level] eq 3" />市级代理<elseif condition="$v[level] eq 4" />省级代理<else />注册会员</if>〗</span>
               <span class="t_t">消费总额：{$v[total_amount]}元</span>
               <span class="t_t">累计佣金：{$v[distribut_money]}元</span>
               <span class="t_t">加入时间：{:date('Y-m-d',$v[reg_time])}</span>

@@ -1,6 +1,6 @@
   <!-- 子级动态展示 lishibo 2018/11/26-->
   <div id="targetName" style="background-color: #fade7e; width: 100%;  height: 1.3rem;line-height: 1.3rem;
-  color:rgb(236, 70, 4);font-weight: 700;display: none;   "> &nbsp;&nbsp; 销售代表【{$targetName}】代理关系：</div>
+  color:rgb(236, 70, 4);font-weight: 700;display: none;   "> &nbsp;&nbsp; 入单会员【{$targetName}】代理关系：</div>
  
 <foreach name="lists" item="v">
   <div class="my_team_alon p" <if condition="$v[second_leader] eq 2" />style="padding-left:3rem;"</if> >
@@ -19,10 +19,10 @@
                   <elseif condition="$v[second_leader] eq $dqyh" />二级<else />三级</if> &nbsp;代理人数：{$v[yjnum]}〗
               </span>
 
-              <span class="t_t" >〖<if condition="$v[level] eq 2">销售代表<elseif condition="$v[level] eq 3" />业务经理<elseif condition="$v[level] eq 4" />高级经理<else />注册会员</if>〗</span> 
-              <span class="t_t">消费总额：{$v[total_amount]}元</span>
-              <span class="t_t">累计佣金：{$v[distribut_money]}元</span>
-              <span class="t_t">加入时间：{:date('Y-m-d',$v[reg_time])}</span>
+              <span class="t_t" >〖<if condition="$v[level] eq 2">入单会员<elseif condition="$v[level] eq 3" />市级代理<elseif condition="$v[level] eq 4" />省级代理<else />注册会员</if>〗</span>
+              <span class="t_t">消费总额1：{$v[total_amount]}元</span>
+              <span class="t_t">累计佣金1：{$v[distribut_money]}元</span>
+              <span class="t_t">加入时间1：{:date('Y-m-d',$v[reg_time])}</span>
           </div>
           
            <!-- ADD BY LISHIBO 2018/11/26 -->
