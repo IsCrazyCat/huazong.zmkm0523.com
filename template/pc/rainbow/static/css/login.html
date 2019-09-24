@@ -16,7 +16,7 @@
     <div class="banner"> <a href="#" id="aBanner"><img src="__STATIC__/images/yongxin800_454.jpg" width="620" height="410"/></a> </div>
     <div class="login-form">
       <div class="title oh">
-        <h1 class="fl">登录爱丽安轻创业联盟</h1>
+        <h1 class="fl">登录博商网络联盟</h1>
         <div class="regist-link fr"> <a href="{:U('Home/User/reg')}">免费注册</a> </div>
       </div>
       <div class="u-msg-wrap">
@@ -53,7 +53,7 @@
         <div class="u-btn mb20 mt20"> <a href="javascript:void(0);" onClick="checkSubmit();" class="J-login-submit" name="sbtbutton">登&nbsp;&nbsp;&nbsp;&nbsp;录</a> </div>
       </form>
       <dl class="account">
-        <dt class="mr20">使用合作网站帐号登录爱丽安轻创业联盟:</dt>
+        <dt class="mr20">使用合作网站帐号登录博商网络联盟:</dt>
           <tpshop sql="select * from __PREFIX__plugin where type='login' AND status = 1" item="v" key="k">
               <if condition="$v['code'] eq 'qq'"><dd><a href="{:U('LoginApi/login',array('oauth'=>'qq'))}" class="qq" title="QQ"></a></dd></if>
               <if condition="$v['code'] eq 'weixin'"><dd><a href="{:U('LoginApi/login',array('oauth'=>'weixin'))}" class="qq weixin" title="weixin"></a></dd></if>

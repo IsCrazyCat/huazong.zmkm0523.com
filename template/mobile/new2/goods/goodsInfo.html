@@ -49,8 +49,8 @@
             
             
                    <p>市场价：<span class="linethr">{$goods.market_price}</span></p>
-                   <p class="red" id="shop_price">￥{$goods.shop_price}</p>
-                
+                <p class="red" id="shop_price">￥1{$goods.shop_price} </p>
+
                 <p>销量：<span>{$goods.sales_sum}</span>
                     <span class="kc">当前库存：<span>
                         <empty name="goods['flash_sale']">{$goods.store_count}<else/>{$goods.flash_sale.goods_num-$goods.flash_sale.buy_num}</empty>
@@ -346,7 +346,7 @@
         <div class="fl">
             <ul>
                 <li>
-                    <!--<a href="tencent://message/?uin={$tpshop_config['shop_info_qq']}&Site=爱丽安轻创业联盟商城&Menu=yes">-->
+                    <!--<a href="tencent://message/?uin={$tpshop_config['shop_info_qq']}&Site=博商网络联盟商城&Menu=yes">-->
                     <a href="tel:{$tpshop_config['shop_info_phone']}">
                         <i></i>
                         <p>客服</p>
@@ -727,7 +727,13 @@ $(document).ready(function(){
         $('#store_count').html(store_count);    //对应规格库存显示出来
         $('#number').attr('max',store_count); //对应规格最大库存
         $("#goods_price").html('<span>￥</span><span>'+goods_price+'</span>'); // 变动价格显示
-        $("#shop_price").html('￥'+goods_price+'元'); // 变动价格显示
+        var goods_name = "{$goods.goods_name}";
+        if(goods_name == "入单商品"){
+
+        }else{
+            $("#shop_price").html('￥'+goods_price+'元'+ '&nbsp;&nbsp;&nbsp;&nbsp;<span style="font-size: 18px;color:#999999; ">20%余额+80%积分</span>'); // 变动价格显示
+        }
+
 
     }
     function sortNumber(a,b)

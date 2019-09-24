@@ -73,7 +73,7 @@ function update_user_level($user_id){
  * 只有首次购买入单商品才会触发
  * @param $user_id
  */
-function distribution_money_by_level($user_id,$order_id){
+function distribution_money_by_level($user_id,$order_id = '0'){
     $cur_user = Db::name('users')->where("user_id", $user_id)->find();//
     //直接推荐人，二级推荐人(市代)，三级推荐人（省代） 奖励发放完毕更新，没有则是0
     $first_leader = $cur_user['first_leader'];//推荐人
@@ -91,8 +91,8 @@ function distribution_money_by_level($user_id,$order_id){
         // 记录log 日志
         $account_log['change_time'] = time();
         $account_log['desc'] = '入单奖励';
-        $account_log['order_sn'] = $order['order_sn'];
-        $account_log['order_id'] = $order_id;
+        $account_log['order_sn'] = $order['order_sn'] ? $order['order_sn'] : 0;
+        $account_log['order_id'] = $order_id ? $order_id : 0;
         $account_log['jxmc'] = '入单奖励';
         //是入单会员商品,检查是否首次购买
         if(check_rudan_first($user_id)){
@@ -252,9 +252,10 @@ function distribution_money_by_level($user_id,$order_id){
             //只有首次购买入单商品，才会更新会员等级
             update_user_level($user_id);
             //首次购买奖励发放完成，将首次购买状态is_buy_rudan修改为1 已购买过入单商品
-            Db::name('users')
-                ->where('user_id',$user_id)
-                ->update(['is_buy_rudan'=>1]);
+            //在录入信息时，自动默认为1 因此不用再修改了
+//            Db::name('users')
+//                ->where('user_id',$user_id)
+//                ->update(['is_buy_rudan'=>1]);
         }else {
             //复消 购买金额为4折272 奖励的时候不论等级 直推100 直接推荐人的直推奖励20 最近市代和省代各获得5元
             //直推 100
@@ -1392,7 +1393,8 @@ function update_pay_status($order_sn,$ext=array())
  *
  * @param $user_id 用户ID
  * @return bool ture:首次购买 false:已购买过
- *
+ * 其实购买入单商品着均为复购，录入或报单时为首次购买且是线下购买
+ * 本来该废弃，但是已经加到代码里了 就不改了，不影响逻辑。录入的时候把is_buy_first设置为1就成了
  */
 function check_rudan_first($user_id){
     $user = Db::name("users")
@@ -1681,18 +1683,23 @@ function calculate_price($user_id = 0, $order_goods, $shipping_code = '', $shipp
         }
         //如果是入单商品，购买一份为680，第二份4折
         if( 0 != strcmp($val['goods_name'],"入单商品")){
+            // 小计 如果不在这里设置20%的折扣，就在设置商品是设置会员价格
             $val['goods_fee'] = $val['goods_num'] * $val['member_goods_price'] * 20 / 100;    // 小计
+//            $val['goods_fee'] = $val['goods_num'] * $val['member_goods_price'] * 20 / 100;
         }else{
-            if(!check_rudan_first($user_id)){
-                //不是首次购买入单商品
-                $val['goods_fee'] = $val['goods_num'] * $val['member_goods_price'] * 0.4 ;    // 小计
-            }else{
-                if($val['goods_num'] >1){
-                    $val['goods_fee'] = ($val['goods_num']-1) * $val['member_goods_price'] * 0.4 + $val['member_goods_price'];    // 小计
-                }else{
-                    $val['goods_fee'] =  $val['member_goods_price'];
-                }
-            }
+            //更改场景 所有会员均为线下购买入单商品之后 再由推荐人录入信息，不能够自己注册
+//            if(!check_rudan_first($user_id)){
+//                //不是首次购买入单商品
+//                $val['goods_fee'] = $val['goods_num'] * $val['member_goods_price'] * 0.4 ;    // 小计
+//            }else{
+//                if($val['goods_num'] >1){
+//                    $val['goods_fee'] = ($val['goods_num']-1) * $val['member_goods_price'] * 0.4 + $val['member_goods_price'];    // 小计
+//                }else{
+//                    $val['goods_fee'] =  $val['member_goods_price'];
+//                }
+//            }
+            //因此这里的价格均为复购价格272元 可以设置商品价格680 会员价格272，因为系统里不会存在非会员用户
+            $val['goods_fee'] = $val['goods_num'] * $val['member_goods_price'];
         }
 
         $order_goods[$key]['store_count'] = getGoodNum($val['goods_id'], $val['spec_key']); // 最多可购买的库存数量

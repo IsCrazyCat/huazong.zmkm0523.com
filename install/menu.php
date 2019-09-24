@@ -13,7 +13,7 @@ $jsonmenu = '{
 		
 	  {	
           "type":"view",
-          "name":"爱丽安轻",
+          "name":"博商网络",
           "url":"http://lchy.weixinguanfang.com/index.php/Mobile/"
       },
 	    {	

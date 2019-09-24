@@ -115,7 +115,7 @@ class WechatLogic
                 return ['status' => -1, 'msg' => "保存数据出错"];
             }
         }
-        $wechatObj->sendMsg($openid, "欢迎来到爱丽安轻创业联盟商城! 商城入口：http://".$_SERVER['HTTP_HOST'].'/mobile/');
+        $wechatObj->sendMsg($openid, "欢迎来到博商网络联盟商城! 商城入口：http://".$_SERVER['HTTP_HOST'].'/mobile/');
         exit;
     }
     
@@ -277,7 +277,7 @@ class WechatLogic
     {
         $fromUsername = $msg['FromUserName'];
         $toUsername   = $msg['ToUserName'];
-        $content = '欢迎来到爱丽安轻创业联盟商城 !';
+        $content = '欢迎来到博商网络联盟商城 !';
         $resultStr = $this->wechatObj->createReplyMsgOfText($toUsername, $fromUsername, $content);
         exit($resultStr);
     }

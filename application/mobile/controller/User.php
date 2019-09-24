@@ -11,15 +11,16 @@
  * ============================================================================
  * 2015-11-21
  */
+
 namespace app\mobile\controller;
 
 use app\home\logic\UsersLogic;
 use app\home\model\Message;
 use app\common\logic\OrderLogic;
 use think\Page;
-use think\Request;
 use think\Verify;
 use think\db;
+use think\Url;
 
 class User extends MobileBase
 {
@@ -65,7 +66,7 @@ class User extends MobileBase
      */
     public function index()
     {
-        $user_id =$this->user_id;
+        $user_id = $this->user_id;
         $logic = new UsersLogic();
         $user = $logic->get_info($user_id); //当前登录用户信息
         $comment_count = M('comment')->where("user_id", $user_id)->count();   // 我的评论数
@@ -75,7 +76,7 @@ class User extends MobileBase
         $this->assign('user_message_count', $user_message_count);
         $this->assign('level_name', $level_name);
         $this->assign('comment_count', $comment_count);
-        $this->assign('user',$user['result']);
+        $this->assign('user', $user['result']);
         return $this->fetch();
     }
 
@@ -84,24 +85,24 @@ class User extends MobileBase
     {
         session_unset();
         session_destroy();
-        setcookie('uname','',time()-3600,'/');
-        setcookie('cn','',time()-3600,'/');
-        setcookie('user_id','',time()-3600,'/');
-        setcookie('PHPSESSID','',time()-3600,'/');
+        setcookie('uname', '', time() - 3600, '/');
+        setcookie('cn', '', time() - 3600, '/');
+        setcookie('user_id', '', time() - 3600, '/');
+        setcookie('PHPSESSID', '', time() - 3600, '/');
         //$this->success("退出成功",U('Mobile/Index/index'));
         header("Location:" . U('Mobile/Index/index'));
         exit();
     }
-	
+
     public function mylogout()
     {
         session_unset();
         session_destroy();
-        setcookie('uname','',time()-3600,'/');
-        setcookie('cn','',time()-3600,'/');
-        setcookie('user_id','',time()-3600,'/');
-        setcookie('PHPSESSID','',time()-3600,'/');
-        $this->success("退出成功",U('Mobile/Index/index'));
+        setcookie('uname', '', time() - 3600, '/');
+        setcookie('cn', '', time() - 3600, '/');
+        setcookie('user_id', '', time() - 3600, '/');
+        setcookie('PHPSESSID', '', time() - 3600, '/');
+        $this->success("退出成功", U('Mobile/Index/index'));
         return $this->fetch();
     }
 
@@ -158,16 +159,16 @@ class User extends MobileBase
         $cartLogic->setUserId($this->user_id);
         $result = $cartLogic->getUserCartList(1);//获取购物车商品
         $where = '';
-        if(empty($type)){
+        if (empty($type)) {
             $where = " c2.uid = {$this->user_id} and {$now} < c1.use_end_time and {$now} > c1.use_start_time and c1.condition <= {$result['total_price']['total_fee']} ";
         }
-        if($type == 1){
-           $where = " c2.uid = {$this->user_id} and c1.use_end_time < {$now} or c1.use_start_time > {$now} or {$result['total_price']['total_fee']}  < c1.condition ";
+        if ($type == 1) {
+            $where = " c2.uid = {$this->user_id} and c1.use_end_time < {$now} or c1.use_start_time > {$now} or {$result['total_price']['total_fee']}  < c1.condition ";
         }
         $coupon_list = DB::name('coupon')
             ->alias('c1')
             ->field('c1.name,c1.money,c1.condition,c1.use_end_time, c2.*')
-            ->join('coupon_list c2','c2.cid = c1.id and c1.type in(0,1,2,3) and order_id = 0','LEFT')
+            ->join('coupon_list c2', 'c2.cid = c1.id and c1.type in(0,1,2,3) and order_id = 0', 'LEFT')
             ->where($where)
             ->select();
         $this->assign('coupon_list', $coupon_list); // 优惠券列表
@@ -227,9 +228,9 @@ class User extends MobileBase
     public function reg()
     {
 
-        if($this->user_id > 0) {
+        if ($this->user_id > 0) {
             $this->redirect(U('Mobile/User/index'));
-            $this->ajaxReturn(['status'=>1,'msg'=>'您已注册']);
+            $this->ajaxReturn(['status' => 1, 'msg' => '您已注册']);
         }
         $reg_sms_enable = tpCache('sms.regis_sms_enable');
         $reg_smtp_enable = tpCache('sms.regis_smtp_enable');
@@ -242,12 +243,12 @@ class User extends MobileBase
             $mobile = I('post.mobile', '');
             $password = I('post.password', '');
             $password2 = I('post.password2', '');
-			
+
             $chushengriqi = I('post.chushengriqi', '');
-			//$chushengriqi = strtotime($chushengriqi);
-			
-			$invite = 0;
-			$invite = I('post.invite', 0);//推荐人手机号
+            //$chushengriqi = strtotime($chushengriqi);
+
+            $invite = 0;
+            $invite = I('post.invite', 0);//推荐人手机号
 
             //是否开启注册验证码机制
             $code = I('post.mobile_code', '');
@@ -256,51 +257,127 @@ class User extends MobileBase
             $session_id = session_id();
 
             //是否开启注册验证码机制
-            if(check_mobile($mobile)){
-                if($reg_sms_enable){
+            if (check_mobile($mobile)) {
+                if ($reg_sms_enable) {
                     //手机功能没关闭
                     $check_code = $logic->check_validate_code($code, $mobile, 'phone', $session_id, $scene);
-                    if($check_code['status'] != 1){
+                    if ($check_code['status'] != 1) {
                         $this->ajaxReturn($check_code);
                     }
                 }
             }
             //是否开启注册邮箱验证码机制
-            if(check_email($mobile)){
-                if($reg_smtp_enable){
+            if (check_email($mobile)) {
+                if ($reg_smtp_enable) {
                     //邮件功能未关闭
                     $check_code = $logic->check_validate_code($code, $mobile);
-                    if($check_code['status'] != 1){
+                    if ($check_code['status'] != 1) {
                         $this->ajaxReturn($check_code);
                     }
                 }
             }
-			
-			
+
+
             //$data = $logic->reg($username, $password, $password2);
-            $data = $logic->my_reg($username,$mobile,$password, $password2,$chushengriqi, 0 , trim($invite) );
+            $data = $logic->my_reg($username, $mobile, $password, $password2, $chushengriqi, 0, trim($invite));
             if ($data['status'] != 1)
                 $this->ajaxReturn($data['msg']);
-                
+
             session('user', $data['result']);
             setcookie('user_id', $data['result']['user_id'], null, '/');
 //            setcookie('is_distribut', $data['result']['is_distribut'], null, '/');
             $cartLogic = new \app\home\logic\CartLogic();
             $cartLogic->setUserId($data['result']['user_id']);
-			
-			
-			
+
+
             //$cartLogic->doUserLoginHandle();// 用户登录后 需要对购物车 一些操作
 //          $cartLogic->login_cart_handle($this->session_id, $data['result']['user_id']);  //用户登录后 需要对购物车 一些操作
             $this->ajaxReturn($data);
             exit;
         }
-        $this->assign('regis_sms_enable',$reg_sms_enable); // 注册启用短信：
-        $this->assign('regis_smtp_enable',$reg_smtp_enable); // 注册启用邮箱：
-        $sms_time_out = tpCache('sms.sms_time_out')>0 ? tpCache('sms.sms_time_out') : 120;
+        $this->assign('regis_sms_enable', $reg_sms_enable); // 注册启用短信：
+        $this->assign('regis_smtp_enable', $reg_smtp_enable); // 注册启用邮箱：
+        $sms_time_out = tpCache('sms.sms_time_out') > 0 ? tpCache('sms.sms_time_out') : 120;
         $this->assign('sms_time_out', $sms_time_out); // 手机短信超时时间
-		
-		
+
+
+        return $this->fetch();
+    }
+
+    /**
+     *  报单注册
+     */
+    public function agency_reg()
+    {
+        if ($this->user_id < 0) {
+            $this->redirect(Url::bind('Mobile/User/login'));
+        } else {
+            //判断当前用户余额是够足够扣除680
+            if ($this->user['user_money'] < 680) {
+                $this->ajaxReturn(['status' => -1, 'msg' => '您余额不足，请先充值！']);
+            }
+        }
+        $reg_sms_enable = tpCache('sms.regis_sms_enable');
+        $reg_smtp_enable = tpCache('sms.regis_smtp_enable');
+
+        if (IS_POST) {
+            $logic = new UsersLogic();
+            //验证码检验
+            //$this->verifyHandle('user_reg');
+            $username = I('post.username', '');
+            $mobile = I('post.mobile', '');
+            $password = I('post.password', '');
+            $password2 = I('post.password2', '');
+
+            $chushengriqi = I('post.chushengriqi', '');
+
+            $invite = $this->user_id;//有当前会员进行录入或报单，故推荐人为当前会员
+
+            //是否开启注册验证码机制
+            $code = I('post.mobile_code', '');
+            $scene = I('post.scene', 1);
+
+            $session_id = session_id();
+
+            //是否开启注册验证码机制
+            if (check_mobile($mobile)) {
+                if ($reg_sms_enable) {
+                    //手机功能没关闭
+                    $check_code = $logic->check_validate_code($code, $mobile, 'phone', $session_id, $scene);
+                    if ($check_code['status'] != 1) {
+                        $this->ajaxReturn($check_code);
+                    }
+                }
+            }
+            //是否开启注册邮箱验证码机制
+            if (check_email($mobile)) {
+                if ($reg_smtp_enable) {
+                    //邮件功能未关闭
+                    $check_code = $logic->check_validate_code($code, $mobile);
+                    if ($check_code['status'] != 1) {
+                        $this->ajaxReturn($check_code);
+                    }
+                }
+            }
+
+            $data = $logic->agency_reg($username, $mobile, $password, $password2, $chushengriqi, 0, $invite);
+            if ($data['status'] != 1)
+                $this->ajaxReturn($data);
+
+            session('user', $data['result']);
+            setcookie('user_id', $data['result']['user_id'], null, '/');
+            $cartLogic = new \app\home\logic\CartLogic();
+            $cartLogic->setUserId($data['result']['user_id']);
+
+            $this->ajaxReturn($data);
+            exit;
+        }
+        $this->assign('regis_sms_enable', $reg_sms_enable); // 注册启用短信：
+        $this->assign('regis_smtp_enable', $reg_smtp_enable); // 注册启用邮箱：
+        $sms_time_out = tpCache('sms.sms_time_out') > 0 ? tpCache('sms.sms_time_out') : 120;
+        $this->assign('sms_time_out', $sms_time_out); // 手机短信超时时间
+
+
         return $this->fetch();
     }
 
@@ -311,9 +388,9 @@ class User extends MobileBase
     {
         $where = ' user_id=' . $this->user_id;
         //条件搜索
-       if(I('get.type')){
+        if (I('get.type')) {
             $where .= C(strtoupper(I('get.type')));
-       }   
+        }
         $count = M('order')->where($where)->count();
         $Page = new Page($count, 10);
         $show = $Page->show();
@@ -365,8 +442,8 @@ class User extends MobileBase
             $this->error('没有获取到订单信息');
             exit;
         }
-		
-		
+
+
 //		if($order_info['pay_status'] == 1){
 //
 //			if(file_exists(APP_PATH.'common/logic/DistributLogic.php'))
@@ -392,8 +469,8 @@ class User extends MobileBase
 //
 //
 //        }
-		
-		
+
+
         //获取订单商品
         $model = new UsersLogic();
         $data = $model->get_order_goods($order_info['order_id']);
@@ -581,7 +658,7 @@ class User extends MobileBase
                 if ($info) {
                     // 成功上传后 获取上传信息
                     // 输出 jpg
-                    $comment_img[] = '/'.$save_url . '/' . $info->getFilename();
+                    $comment_img[] = '/' . $save_url . '/' . $info->getFilename();
                 } else {
                     // 上传失败获取错误信息
                     $this->error($file->getError());
@@ -614,7 +691,7 @@ class User extends MobileBase
             //添加评论
             $row = $logic->add_comment($add);
             if ($row['status'] == 1) {
-                $this->success('评论成功', U('/Mobile/User/comment', array('status'=>1)));
+                $this->success('评论成功', U('/Mobile/User/comment', array('status' => 1)));
                 exit();
             } else {
                 $this->error($row['msg']);
@@ -635,21 +712,21 @@ class User extends MobileBase
         $user_info = $userLogic->get_info($this->user_id); // 获取用户信息
         $user_info = $user_info['result'];
         if (IS_POST) {
-        	if ($_FILES['head_pic']['tmp_name']) {
-        		$file = $this->request->file('head_pic');
-        		$validate = ['size'=>1024 * 1024 * 3,'ext'=>'jpg,png,gif,jpeg'];
-        		$dir = 'public/upload/head_pic/';
-        		if (!($_exists = file_exists($dir))){
-        			$isMk = mkdir($dir);
-        		}
-        		$parentDir = date('Ymd');
-        		$info = $file->validate($validate)->move($dir, true);
-        		if($info){
-        			$post['head_pic'] = '/'.$dir.$parentDir.'/'.$info->getFilename();
-        		}else{
-        			$this->error($info->getError());//上传错误提示错误信息
-        		}
-        	}
+            if ($_FILES['head_pic']['tmp_name']) {
+                $file = $this->request->file('head_pic');
+                $validate = ['size' => 1024 * 1024 * 3, 'ext' => 'jpg,png,gif,jpeg'];
+                $dir = 'public/upload/head_pic/';
+                if (!($_exists = file_exists($dir))) {
+                    $isMk = mkdir($dir);
+                }
+                $parentDir = date('Ymd');
+                $info = $file->validate($validate)->move($dir, true);
+                if ($info) {
+                    $post['head_pic'] = '/' . $dir . $parentDir . '/' . $info->getFilename();
+                } else {
+                    $this->error($info->getError());//上传错误提示错误信息
+                }
+            }
             I('post.nickname') ? $post['nickname'] = I('post.nickname') : false; //昵称
             I('post.qq') ? $post['qq'] = I('post.qq') : false;  //QQ号码
             I('post.head_pic') ? $post['head_pic'] = I('post.head_pic') : false; //头像地址
@@ -682,7 +759,7 @@ class User extends MobileBase
 
             if (!$userLogic->update_info($this->user_id, $post))
                 $this->error("保存失败");
-            setcookie('uname',urlencode($post['nickname']),null,'/');
+            setcookie('uname', urlencode($post['nickname']), null, '/');
             $this->success("操作成功");
             exit;
         }
@@ -986,7 +1063,7 @@ class User extends MobileBase
         $this->assign('is_set', $is_set);
         return $this->fetch();
     }
- 
+
     /**
      * 验证码验证
      * $id 验证码标示
@@ -1009,15 +1086,15 @@ class User extends MobileBase
         $config = array(
             'fontSize' => 30,
             'length' => 4,
-            'imageH' =>  60,
-            'imageW' =>  300,
+            'imageH' => 60,
+            'imageW' => 300,
             'fontttf' => '5.ttf',
             'useCurve' => true,
             'useNoise' => false,
         );
         $Verify = new Verify($config);
         $Verify->entry($type);
-		exit();
+        exit();
     }
 
     /**
@@ -1036,14 +1113,14 @@ class User extends MobileBase
         $id = I('get.id/d', 0);
         $data = confirm_order($id, $this->user_id);
         if ($data['status'] != 1) {
-            $this->error($data['msg'],U('Mobile/User/order_list'));
+            $this->error($data['msg'], U('Mobile/User/order_list'));
         } else {
-			
+
             $model = new UsersLogic();
             $order_goods = $model->get_order_goods($id);
             $this->assign('order_goods', $order_goods);
-			
-			// 多少天后自动分销记录自动分成 
+
+            // 多少天后自动分销记录自动分成
 //			if(file_exists(APP_PATH.'common/logic/DistributLogic.php')){
 //				$distributLogic = new \app\common\logic\DistributLogic();
 //				$distributLogic->auto_confirm(); // 自动确认分成
@@ -1063,9 +1140,8 @@ class User extends MobileBase
 //		if ( (int)$third_leader > 0 ) {
 //			update_user_level($third_leader);
 //		}
-	    
-			
-			
+
+
             return $this->fetch();
             exit;
         }
@@ -1076,31 +1152,29 @@ class User extends MobileBase
      */
     public function return_goods()
     {
-        $rec_id = I('rec_id',0);
-        $return_goods = M('return_goods')->where(array('rec_id'=>$rec_id))->find();
-        if(!empty($return_goods))
-        {
-            $this->error('已经提交过退货申请!',U('Order/return_goods_info',array('id'=>$return_goods['id'])));
+        $rec_id = I('rec_id', 0);
+        $return_goods = M('return_goods')->where(array('rec_id' => $rec_id))->find();
+        if (!empty($return_goods)) {
+            $this->error('已经提交过退货申请!', U('Order/return_goods_info', array('id' => $return_goods['id'])));
         }
-        $order_goods = M('order_goods')->where(array('rec_id'=>$rec_id))->find();
-        $order = M('order')->where(array('order_id'=>$order_goods['order_id'],'user_id'=>$this->user_id))->find();
-        if(empty($order))$this->error('非法操作');
-        if(IS_POST)
-        {
+        $order_goods = M('order_goods')->where(array('rec_id' => $rec_id))->find();
+        $order = M('order')->where(array('order_id' => $order_goods['order_id'], 'user_id' => $this->user_id))->find();
+        if (empty($order)) $this->error('非法操作');
+        if (IS_POST) {
             $model = new OrderLogic();
-            $res = $model->addReturnGoods($rec_id,$order);  //申请售后
-            if($res['result']==1)$this->success($res['msg'],U('User/return_goods_list'));
+            $res = $model->addReturnGoods($rec_id, $order);  //申请售后
+            if ($res['result'] == 1) $this->success($res['msg'], U('User/return_goods_list'));
             $this->error($res['msg']);
         }
-        $region_id[] = tpCache('shop_info.province');        
-        $region_id[] = tpCache('shop_info.city');        
+        $region_id[] = tpCache('shop_info.province');
+        $region_id[] = tpCache('shop_info.city');
         $region_id[] = tpCache('shop_info.district');
-        $region_id[] = 0;        
-        $return_address = M('region')->where("id in (".implode(',', $region_id).")")->getField('id,name');
-        $order_info = array_merge($order,$order_goods);  //合并数组
+        $region_id[] = 0;
+        $return_address = M('region')->where("id in (" . implode(',', $region_id) . ")")->getField('id,name');
+        $order_info = array_merge($order, $order_goods);  //合并数组
         $this->assign('return_address', $return_address);
         $this->assign('goods', $order_goods);
-    	$this->assign('order',$order);
+        $this->assign('order', $order);
         return $this->fetch();
     }
 
@@ -1115,13 +1189,13 @@ class User extends MobileBase
         $page = new Page($count, $pagesize);
         $list = M('return_goods')->where("user_id", $this->user_id)->order("id desc")->limit("{$page->firstRow},{$page->listRows}")->select();
         $goods_id_arr = get_arr_column($list, 'goods_id');  //获取商品ID
-        if (!empty($goods_id_arr)){
+        if (!empty($goods_id_arr)) {
             $goodsList = M('goods')->where("goods_id", "in", implode(',', $goods_id_arr))->getField('goods_id,goods_name');
         }
         $state = C('REFUND_STATUS');
         $this->assign('goodsList', $goodsList);
         $this->assign('list', $list);
-        $this->assign('state',$state);
+        $this->assign('state', $state);
         $this->assign('page', $page->show());// 赋值分页输出
         if (I('is_ajax')) {
             return $this->fetch('ajax_return_goods_list');
@@ -1142,7 +1216,7 @@ class User extends MobileBase
             $return_goods['imgs'] = explode(',', $return_goods['imgs']);
         $goods = M('goods')->where("goods_id = {$return_goods['goods_id']} ")->find();
         $state = C('REFUND_STATUS');
-        $this->assign('state',$state);
+        $this->assign('state', $state);
         $this->assign('goods', $goods);
         $this->assign('return_goods', $return_goods);
         return $this->fetch();
@@ -1205,7 +1279,7 @@ class User extends MobileBase
             }
             if (M('withdrawals')->add($data)) {
                 //$this->success("已提交申请");
-				$this->success("已提交申请,48小时内打款", U('User/Index'));
+                $this->success("已提交申请,48小时内打款", U('User/Index'));
                 exit;
             } else {
                 $this->error('提交失败,联系客服!');
@@ -1378,7 +1452,8 @@ class User extends MobileBase
     /**
      * 设置消息通知
      */
-    public function set_notice(){
+    public function set_notice()
+    {
         //暂无数据
         return $this->fetch();
     }
@@ -1388,13 +1463,14 @@ class User extends MobileBase
      * @author lxl
      * @time 2017-4-19
      */
-    public function return_goods_cancel(){
-        $id = I('id',0);
-        if(empty($id))$this->error('参数错误');
-        $return_goods = M('return_goods')->where(array('id'=>$id,'user_id'=>$this->user_id))->find();
-        if(empty($return_goods)) $this->error('参数错误');
-        M('return_goods')->where(array('id'=>$id))->save(array('status'=>-2,'canceltime'=>time()));
-        $this->success('取消成功',U('User/return_goods_list'));
+    public function return_goods_cancel()
+    {
+        $id = I('id', 0);
+        if (empty($id)) $this->error('参数错误');
+        $return_goods = M('return_goods')->where(array('id' => $id, 'user_id' => $this->user_id))->find();
+        if (empty($return_goods)) $this->error('参数错误');
+        M('return_goods')->where(array('id' => $id))->save(array('status' => -2, 'canceltime' => time()));
+        $this->success('取消成功', U('User/return_goods_list'));
         exit;
     }
 
@@ -1403,11 +1479,12 @@ class User extends MobileBase
      * @author lxl
      * @time  17-4-25
      * */
-    public function receiveConfirm(){
-        $return_id=I('return_id/d');
-        $return_info=M('return_goods')->field('order_id,order_sn,goods_id,spec_key')->where('id',$return_id)->find(); //查找退换货商品信息
-        $update = M('return_goods')->where('id',$return_id)->save(['status'=>3]);  //要更新状态为已完成
-        if($update) {
+    public function receiveConfirm()
+    {
+        $return_id = I('return_id/d');
+        $return_info = M('return_goods')->field('order_id,order_sn,goods_id,spec_key')->where('id', $return_id)->find(); //查找退换货商品信息
+        $update = M('return_goods')->where('id', $return_id)->save(['status' => 3]);  //要更新状态为已完成
+        if ($update) {
             M('order_goods')->where(array(
                 'order_id' => $return_info['order_id'],
                 'goods_id' => $return_info['goods_id'],
@@ -1457,12 +1534,12 @@ class User extends MobileBase
     public function del_visit_log()
     {
         $visit_ids = I('get.visit_ids', 0);
-        $row = M('goods_visit')->where('visit_id','IN', $visit_ids)->delete();
+        $row = M('goods_visit')->where('visit_id', 'IN', $visit_ids)->delete();
 
-        if(!$row) {
-            $this->error('操作失败',U('User/visit_log'));
+        if (!$row) {
+            $this->error('操作失败', U('User/visit_log'));
         } else {
-            $this->success("操作成功",U('User/visit_log'));
+            $this->success("操作成功", U('User/visit_log'));
         }
     }
 
@@ -1473,10 +1550,10 @@ class User extends MobileBase
     {
         $row = M('goods_visit')->where('user_id', $this->user_id)->delete();
 
-        if(!$row) {
-            $this->error('操作失败',U('User/visit_log'));
+        if (!$row) {
+            $this->error('操作失败', U('User/visit_log'));
         } else {
-            $this->success("操作成功",U('User/visit_log'));
+            $this->success("操作成功", U('User/visit_log'));
         }
     }
 

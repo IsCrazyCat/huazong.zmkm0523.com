@@ -120,7 +120,7 @@
 													<div class="fl_ttmm">
 														<span class="time-num">下单时间：<em class="num">{$list.add_time|date='Y-m-d H:i:s',###}</em></span>
 														<span class="time-num">订单编号：<em class="num">{$list.order_sn}</em></span>
-														<!--<span class="time-num">卖家：<a href="tencent://message/?uin={$store_list[$list[store_id]][store_qq]}&Site=爱丽安轻创业联盟商城&Menu=yes"><em class="num">{$store_list[$list[store_id]][store_name]}<i class="ear"></i></em></a></span>-->
+														<!--<span class="time-num">卖家：<a href="tencent://message/?uin={$store_list[$list[store_id]][store_qq]}&Site=博商网络联盟商城&Menu=yes"><em class="num">{$store_list[$list[store_id]][store_name]}<i class="ear"></i></em></a></span>-->
 														<div class="paysoon">
 														<if condition="$list.pay_btn eq 1">
 															<a class="ps_lj" href="{:U('/Home/Cart/cart4',array('order_id'=>$list[order_id]))}"  target="_blank">立即支付</a>

@@ -2,11 +2,11 @@
     <div class="flool1">
         <ul>
             <if condition="!empty($_COOKIE['user_id'])">
-                <li><a href="{:U('Mobile/User/index')}"><?php echo getSubstr(urldecode($_COOKIE['uname']),0,3);?></a></li>
+<!--                <li><a href="{:U('Mobile/User/index')}"><?php echo getSubstr(urldecode($_COOKIE['uname']),0,3);?></a></li>-->
                 <li><a href="{:U('Mobile/User/logout')}">退出</a></li>
             <else/>
                 <li><a href="{:U('Mobile/User/login')}">登录</a></li>
-                <li><a href="{:U('Mobile/User/reg')}">注册</a></li>
+<!--                <li><a href="{:U('Mobile/User/reg')}">注册</a></li>-->
             </if>
             <!--<li><a href="">反馈</a></li>
 -->
@@ -15,6 +15,6 @@
     </div>
     
     <div class="flool3">
-        <p>Copyright © 2018 爱丽安轻创业联盟商城</p>
+        <p>Copyright © 2018 博商网络联盟商城</p>
     </div>
 </footer>

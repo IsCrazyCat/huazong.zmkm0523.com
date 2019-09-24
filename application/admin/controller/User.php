@@ -608,9 +608,9 @@ class User extends Base {
 												//if($res && $res['status'] ==1 && !empty($sender)){
 													//if ($sender != '15314170988') {  
 													    $params['user_name'] = $user['username'];
-														$params['sms_sign'] =  '爱丽安轻创业联盟';
+														$params['sms_sign'] =  '博商网络联盟';
 														$params['duoshaoyongjin'] = $zongtjryj;
-														$params = array('user_name'=>$user['nickname'] ,'sms_sign'=>'爱丽安轻创业联盟','duoshaoyongjin'=>$zongtjryj  );
+														$params = array('user_name'=>$user['nickname'] ,'sms_sign'=>'博商网络联盟','duoshaoyongjin'=>$zongtjryj  );
 														$resp = sendSms("10", $sender, $params, $user['first_leader'] );
 													//}
 												//}
@@ -648,9 +648,9 @@ class User extends Base {
 													//if($res && $res['status'] ==1 && !empty($sender)){
 														//if ($sender != '15314170988') {  
 															$params['user_name'] = $user['username'];
-															$params['sms_sign'] =  '爱丽安轻创业联盟';
+															$params['sms_sign'] =  '博商网络联盟';
 															$params['duoshaoyongjin'] = $zongssjyj;
-															$params = array('user_name'=>$user['nickname'] ,'sms_sign'=>'爱丽安轻创业联盟','duoshaoyongjin'=>$zongssjyj  );
+															$params = array('user_name'=>$user['nickname'] ,'sms_sign'=>'博商网络联盟','duoshaoyongjin'=>$zongssjyj  );
 															$resp = sendSms("10", $sender, $params, $user['second_leader'] );
 														//}
 													//}
@@ -687,9 +687,9 @@ class User extends Base {
 													//if($res && $res['status'] ==1 && !empty($sender)){
 														//if ($sender != '15314170988') {  
 															$params['user_name'] = $user['username'];
-															$params['sms_sign'] =  '爱丽安轻创业联盟';
+															$params['sms_sign'] =  '博商网络联盟';
 															$params['duoshaoyongjin'] = $zongsssjyj;
-															$params = array('user_name'=>$user['nickname'] ,'sms_sign'=>'爱丽安轻创业联盟','duoshaoyongjin'=>$zongsssjyj  );
+															$params = array('user_name'=>$user['nickname'] ,'sms_sign'=>'博商网络联盟','duoshaoyongjin'=>$zongsssjyj  );
 															$resp = sendSms("10", $sender, $params, $user['third_leader'] );
 														//}
 													//}

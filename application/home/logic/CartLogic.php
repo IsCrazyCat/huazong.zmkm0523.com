@@ -397,11 +397,12 @@ class CartLogic extends Model
                 $cartList[$k]['goods_fee'] = $total_cur_money * 20 / 100;
                 $use_pay_integral += $total_cur_money * 80 / 100;
             }else{
-                if(check_rudan_first($this->user_id)){
-                    $cartList[$k]['goods_fee'] = 680 + ($val['goods_num'] -1) * $val['member_goods_price'] * 40 / 100;
-                }else{
-                    $cartList[$k]['goods_fee'] = $val['goods_num'] * $val['member_goods_price'] * 40 / 100;
-                }
+//                if(check_rudan_first($this->user_id)){
+//                    $cartList[$k]['goods_fee'] = 680 + ($val['goods_num'] -1) * $val['member_goods_price'] * 40 / 100;
+//                }else{
+//                    $cartList[$k]['goods_fee'] = $val['goods_num'] * $val['member_goods_price'] * 40 / 100;
+//                }
+                $cartList[$k]['goods_fee'] = $val['goods_num'] * $val['member_goods_price'];
 
             }
             $cartList[$k]['store_count'] = getGoodNum($val['goods_id'], $val['spec_key']) ?: 0; // 最多可购买的库存数量
